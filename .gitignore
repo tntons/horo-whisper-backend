@@ -1,0 +1,34 @@
+# Node-related
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# pnpm store (if it appears in your project folder)
+.pnpm-store/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*  # If you have multiple environment files, like .env.development, etc.
+
+# Build output (if any)
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Prisma
+prisma/dev.db       # If you use a local SQLite dev database
+prisma/.env         # If you keep a separate .env inside the prisma folder
