@@ -4,7 +4,9 @@ const app = express();
 app.use(express.json());
 
 const userRoutes = require('./routes/userRoutes');
+const tellerRoutes = require('./routes/tellerRoutes');
 app.use('/users', userRoutes);
+app.use('/tellers',tellerRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
