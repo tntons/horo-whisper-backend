@@ -5,8 +5,10 @@ app.use(express.json());
 
 const userRoutes = require('./routes/userRoutes');
 const tellerRoutes = require('./routes/tellerRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 app.use('/users', userRoutes);
 app.use('/tellers',tellerRoutes);
+app.use('/customers', customerRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
