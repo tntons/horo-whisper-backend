@@ -1,6 +1,6 @@
 const clientService = require('../services/customerService.js');
 
-// POST /clients/:tellerid/:selectpack
+// POST /clients
 exports.createSession = async (req, res, next) => {
   try {
     const sessionData = req.body; 

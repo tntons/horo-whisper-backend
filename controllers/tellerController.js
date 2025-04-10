@@ -44,3 +44,16 @@ exports.createTeller = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getTellerPackageById = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.tellerId, 10);
+    const teller = await tellerService.getTellerPackageById(tellerId);
+    if (!teller) {
+      return res.status(404).json({ message: 'Teller not found' });
+    }
+    res.json(teller);
+  } catch (err) {
+    next(err);
+  }
+};

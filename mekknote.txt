@@ -1,0 +1,19 @@
+PAGE: Choose Package:
+
+@Load Teller Package
+METHOD: GET
+Route: /tellers/teller-package/:tellerId
+
+@Click Book
+Method: POST
+Route: /customers/create-session
+Body:{
+customerId:1,
+tellerId:1,
+sessionStatus:"Pending"
+}
+
+
+PAGE: Upcoming Session:
+
+

@@ -27,3 +27,9 @@ exports.getTellerById = async (id) => {
 exports.createTeller = async (data) => {
   return await prisma.teller.create({ data });
 }
+
+exports.getTellerPackageById = async (tellerId) => {
+  return await prisma.TellerPackage.findMany({
+    where: { tellerId },
+  });
+}
