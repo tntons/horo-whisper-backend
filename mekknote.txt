@@ -8,9 +8,16 @@ Route: /tellers/teller-package/:tellerId
 Method: POST
 Route: /customers/book-session
 Body:{
-customerId:1,
-tellerId:1,
-sessionStatus:"Pending"
+    "sessionData":{
+        "customerId":1,
+        "tellerId":1,
+        "sessionStatus":"Pending"
+    },
+    "paymentData":{
+        "customerId":1,
+        "packageId":1,
+        "status":"Disabled"
+    }
 }
 
 

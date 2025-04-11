@@ -2,7 +2,20 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 
-// Create Session
-exports.createSession = async (data) => {
-  return await prisma.Session.create({ data });
-}
+exports.bookSession = async (sessionData, paymentData) => {
+  return await prisma.$transaction(async (tx) => {
+
+    const payment = await tx.Payment.create({
+      data: paymentData
+    });
+
+    const session = await tx.Session.create({
+      data: sessionData
+    });
+
+    return {
+      session,
+      payment
+    };
+  });
+};
