@@ -83,7 +83,7 @@ model Payment {
   id             Int      @id @default(autoincrement())
   customerId     Int
   packageId      Int
-  paymentEvidence String
+  paymentEvidence String?
   createdAt      DateTime @default(now())
   status         String
 

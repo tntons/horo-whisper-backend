@@ -1,7 +1,7 @@
 const clientService = require('../services/customerService.js');
 
 // POST /clients
-exports.createSession = async (req, res, next) => {
+exports.bookSession = async (req, res, next) => {
   try {
     const sessionData = req.body; 
     const newSession = await clientService.createSession(sessionData);

@@ -3,6 +3,6 @@ const router = express.Router();
 const clientController = require('../controllers/customerController.js');
 
 
-router.post('/create-session', clientController.createSession);
+router.post('/book-session', clientController.createSession);
 
 module.exports = router;

@@ -6,7 +6,7 @@ Route: /tellers/teller-package/:tellerId
 
 @Click Book
 Method: POST
-Route: /customers/create-session
+Route: /customers/book-session
 Body:{
 customerId:1,
 tellerId:1,
