@@ -1,75 +1,28 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { AppError } = require('../middleware/errorHandler');
 
+const paymentId = 6;
 const sampleQuery = async () => {
     try {
-        const teller = await prisma.Teller.findUnique({
-            where: {
-                id: 2
-            },
-            select:{
-                id: true,
-                sessions: {
-                    where:{
-                        sessionStatus: "Pending"
-                    },
-                    select:{
-                        id: true,
-                        customerId: true,
-                        tellerId: true,
-                        sessionStatus: true,
-                        customer:{
-                            select:{
-                                user:{
-                                    select:{
-                                        id: true,
-                                        username: true
-                                    }
-                                },
-                                payments:{
-                                    where:{
-                                        AND:[
-                                            {status: "Disabled"},
-                                            {package:{tellerId: 2}},
-                                        ]
-                                    },
-                                    select:{
-                                        id: true,
-                                        customerId: true,
-                                        packageId: true,
-                                        status: true,
-                                        package:true
-                                    }
-                                }
-                            }
-                        },
-                    }
-                }
-            }
+        const payment = await prisma.Payment.findUnique({
+          where: { id: paymentId }
         });
-
-        // Filter the payments in memory to match session IDs
-        const filteredSession = {
-            ...teller,
-            sessions: teller.sessions.map(session => ({
-                ...session,
-                customer: {
-                    ...session.customer,
-                    payments: session.customer.payments.filter(payment => 
-                        payment.id === session.id
-                    )
-                }
-            }))
-        };
-
-        // Pretty print with indentation
-        console.log('Upcoming:', JSON.stringify(filteredSession, null, 2));
-        return filteredSession;
-    } catch (error) {
-        console.error('Error:', error);
-    } finally {
-        await prisma.$disconnect();
-    }
+    
+        if (!payment) {
+          throw new AppError(404, 'PAYMENT_NOT_FOUND', 'Payment not found');
+        }
+    
+        const updatedPayment = await prisma.Payment.update({
+          where: { id: paymentId },
+          data: { status: 'Disabled' }
+        });
+    
+        return updatedPayment;
+      } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError(500, 'UPDATE_PAYMENT_ERROR', 'Error updating payment status');
+      }
 }
 
 // Execute the query

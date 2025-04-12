@@ -109,3 +109,62 @@ const filteredSession = {
 
 return filteredSession;
 }
+
+exports.patchPendingPayment = async (paymentId) => {
+  try {
+    const payment = await prisma.Payment.findUnique({
+      where: { id: paymentId }
+    });
+
+    if (!payment) {
+      throw new AppError(404, 'PAYMENT_NOT_FOUND', 'Payment not found');
+    }
+
+    const updatedPayment = await prisma.Payment.update({
+      where: { id: paymentId },
+      data: { status: 'Pending' }
+    });
+
+    return updatedPayment;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'UPDATE_PAYMENT_ERROR', 'Error updating payment status');
+  }
+};
+
+exports.patchAcceptSession = async (sessionId) => {
+  try {
+    // First check if session exists
+    const existingSession = await prisma.Session.findUnique({
+      where: { id: sessionId }
+    });
+
+    if (!existingSession) {
+      throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
+    }
+
+    // Check if session is in a valid state to be accepted
+    if (existingSession.sessionStatus !== 'Pending') {
+      throw new AppError(400, 'INVALID_SESSION_STATUS', 'Session can only be accepted when in pending status');
+    }
+
+    // Update session within a transaction to ensure consistency
+    const session = await prisma.$transaction(async (prisma) => {
+      const updatedSession = await prisma.Session.update({
+        where: { id: sessionId },
+        data: { sessionStatus: 'Processing' }
+      });
+
+      // Update the related payment
+      await exports.patchPendingPayment(sessionId);
+
+      return updatedSession;
+    });
+
+    return session;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'UPDATE_SESSION_ERROR', 'Error updating session status');
+  }
+};
+

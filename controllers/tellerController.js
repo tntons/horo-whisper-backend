@@ -94,3 +94,29 @@ exports.getUpcomingSessionByTellerId = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.patchAcceptSession = async (req, res, next) => {
+  try {
+    const sessionId = parseInt(req.params.sessionId, 10);
+
+    // check if sessionId is a number
+    if (isNaN(sessionId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid teller ID provided'
+      });
+    }
+
+    const acceptSession = await tellerService.patchAcceptSession(sessionId);
+
+    return res.status(200).json({
+      success: true,
+      data: acceptSession
+    });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
