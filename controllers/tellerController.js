@@ -1,5 +1,11 @@
 const tellerService = require('../services/tellerService.js');
 
+const invalidInputTypeMsg={
+  status: 'error',
+  code: 'INVALID_ID',
+  message: 'Invalid Input Type'
+}
+
 // GET /tellers
 exports.getAllTellers = async (req, res, next) => {
   try {
@@ -51,17 +57,13 @@ exports.getTellerPackageById = async (req, res, next) => {
 
     // check if tellerId is a number
     if (isNaN(tellerId)) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'INVALID_ID',
-        message: 'Invalid teller ID provided'
-      });
+      return res.status(400).json(invalidInputTypeMsg);
     }
 
     const package = await tellerService.getTellerPackageById(tellerId);
     return res.status(200).json({
       success: true,
-      data:package
+      data: package
     })
     res.json(package);
   } catch (err) {
@@ -75,11 +77,7 @@ exports.getUpcomingSessionByTellerId = async (req, res, next) => {
 
     // check if tellerId is a number
     if (isNaN(tellerId)) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'INVALID_ID',
-        message: 'Invalid teller ID provided'
-      });
+      return res.status(400).json(invalidInputTypeMsg);
     }
 
     const teller = await tellerService.getUpcomingSessionByTellerId(tellerId);
@@ -101,14 +99,10 @@ exports.patchAcceptSession = async (req, res, next) => {
 
     // check if sessionId is a number
     if (isNaN(sessionId)) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'INVALID_ID',
-        message: 'Invalid teller ID provided'
-      });
+      return res.status(400).json(invalidInputTypeMsg);
     }
 
-    const acceptSession = await tellerService.patchAcceptSession(sessionId);
+    const acceptSession = await tellerService.patchSessionStatus(sessionId,"Processing");
 
     return res.status(200).json({
       success: true,
@@ -120,3 +114,23 @@ exports.patchAcceptSession = async (req, res, next) => {
   }
 };
 
+
+exports.patchDeclineSession = async (req, res, next) => {
+  try {
+    const sessionId = parseInt(req.params.sessionId, 10);
+
+    // check if sessionId is a number
+    if (isNaN(sessionId)) {
+      return res.status(400).json(invalidInputTypeMsg);
+    }
+
+    const declineSession = await tellerService.patchSessionStatus(sessionId,"Declined");
+
+    return res.status(200).json({
+      success: true,
+      data: declineSession
+    });
+  } catch (err) {
+    next(err);
+  }
+}

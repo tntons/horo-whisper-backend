@@ -110,7 +110,8 @@ const filteredSession = {
 return filteredSession;
 }
 
-exports.patchPendingPayment = async (paymentId) => {
+exports.patchPaymentStatus = async (paymentId, status) => {
+  const newStatus = status === "Processing" ? "Pending" : "Declined";
   try {
     const payment = await prisma.Payment.findUnique({
       where: { id: paymentId }
@@ -122,7 +123,7 @@ exports.patchPendingPayment = async (paymentId) => {
 
     const updatedPayment = await prisma.Payment.update({
       where: { id: paymentId },
-      data: { status: 'Pending' }
+      data: { status: newStatus }
     });
 
     return updatedPayment;
@@ -132,7 +133,7 @@ exports.patchPendingPayment = async (paymentId) => {
   }
 };
 
-exports.patchAcceptSession = async (sessionId) => {
+exports.patchSessionStatus = async (sessionId, status) => {
   try {
     // First check if session exists
     const existingSession = await prisma.Session.findUnique({
@@ -152,11 +153,11 @@ exports.patchAcceptSession = async (sessionId) => {
     const session = await prisma.$transaction(async (prisma) => {
       const updatedSession = await prisma.Session.update({
         where: { id: sessionId },
-        data: { sessionStatus: 'Processing' }
+        data: { sessionStatus: status }
       });
 
       // Update the related payment
-      await exports.patchPendingPayment(sessionId);
+      await exports.patchPaymentStatus(sessionId,status);
 
       return updatedSession;
     });
@@ -167,4 +168,5 @@ exports.patchAcceptSession = async (sessionId) => {
     throw new AppError(500, 'UPDATE_SESSION_ERROR', 'Error updating session status');
   }
 };
+
 

@@ -5,7 +5,7 @@ METHOD: GET
 Route: /tellers/teller-package/:tellerId
 
 @Click Book
-Method: POST
+METHOD: POST
 Route: /customers/book-session
 Body:{
     "sessionData":{
@@ -24,12 +24,16 @@ Body:{
 PAGE: Upcoming Session:
 
 @Load Upcoming Session for a Specific Teller
-Method: GET
+METHOD: GET
 Route: /tellers/upcoming-session/:tellerId
 
 @Accept Session 
 METHOD: PATCH
 Route:/tellers/accept-session/:sessionId
+
+@Decline Session 
+METHOD: PATCH
+Route:/tellers/decline-session/:sessionId
 
 
 
