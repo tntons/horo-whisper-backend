@@ -22,5 +22,8 @@ Body:{
 
 
 PAGE: Upcoming Session:
+@Load Upcoming Session for a Specific Teller
+Method: GET
+Route: /tellers/upcoming-session/:tellerId
 
 

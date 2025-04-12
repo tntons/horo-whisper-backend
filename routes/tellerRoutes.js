@@ -8,5 +8,6 @@ router.get('/:id', tellerController.getTellerById);
 router.post('/', tellerController.createTeller);
 
 router.get('/teller-package/:tellerId', tellerController.getTellerPackageById);
+router.get('/upcoming-session/:tellerId', tellerController.getUpcomingSessionByTellerId);
 
 module.exports = router;

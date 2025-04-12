@@ -1,4 +1,5 @@
 const express = require('express');
+const { errorHandler } = require('./middleware/errorHandler');
 const app = express();
 
 app.use(express.json());
@@ -10,9 +11,7 @@ app.use('/users', userRoutes);
 app.use('/tellers',tellerRoutes);
 app.use('/customers', customerRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+app.use(errorHandler);
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
