@@ -80,12 +80,32 @@ exports.getUpcomingSessionByTellerId = async (req, res, next) => {
       return res.status(400).json(invalidInputTypeMsg);
     }
 
-    const teller = await tellerService.getUpcomingSessionByTellerId(tellerId);
+    const result = await tellerService.getSessionByTellerId("upcoming",tellerId);
 
 
     return res.status(200).json({
       success: true,
-      data: teller
+      data: result
+    });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getPastSessionByTellerId = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.tellerId, 10);
+    //check if tellerId is a number
+    if (isNaN(tellerId)) {
+      return res.status(400).json(invalidInputTypeMsg);
+    }
+
+    const result = await tellerService.getSessionByTellerId("past",tellerId);
+
+    return res.status(200).json({
+      success:true,
+      data: result
     });
 
   } catch (err) {

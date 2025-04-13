@@ -21,6 +21,20 @@ exports.bookSession = async (sessionData, paymentData) => {
   });
 };
 
+exports.getPaymentByPaymentId = async (paymentId) => {
+  try{
+  const payment = await prisma.Payment.findUnique({
+    where: { id: paymentId }
+  });
+
+  return payment;
+  
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'GET_PAYMENT_ERROR', 'Error getting payment');
+  }
+};
+
 exports.verifyPayment = async (paymentId) => {
   try{
   const existingPayment = await prisma.Payment.findUnique({
@@ -34,9 +48,6 @@ exports.verifyPayment = async (paymentId) => {
   }
 
   await new Promise(resolve => setTimeout(resolve, 2000)); //just some mock-up delay
-
-
-  //MUST UPDATE THE STATUSSSSSSSSSSSSS
 
   const result = await prisma.$transaction(async (tx) => {
     // Update payment

@@ -9,6 +9,7 @@ router.post('/', tellerController.createTeller);
 
 router.get('/teller-package/:tellerId', tellerController.getTellerPackageById);
 router.get('/upcoming-session/:tellerId', tellerController.getUpcomingSessionByTellerId);
+router.get('/past-session/:tellerId', tellerController.getPastSessionByTellerId);
 router.patch('/accept-session/:sessionId', tellerController.patchAcceptSession);
 router.patch('/decline-session/:sessionId', tellerController.patchDeclineSession);
 

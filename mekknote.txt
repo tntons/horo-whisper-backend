@@ -40,10 +40,13 @@ Route:/tellers/decline-session/:sessionId
 
 PAGE: Payment:
 
+@get Payment Information
+METHOD: GET
+ROUTE:/customers/get-payment/:paymentId
 
 @verify payment
 METHOD: GET
-Route:/customers/verify-payment/:paymentID
+Route:/customers/verify-payment/:paymentId
 
 
 

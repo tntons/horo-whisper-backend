@@ -16,6 +16,25 @@ exports.bookSession = async (req, res, next) => {
   }
 };
 
+exports.getPaymentByPaymentId = async (req, res, next) => {
+  try{
+    const paymentId = parseInt(req.params.paymentId, 10);
+
+    if (isNaN(paymentId)) {
+      return res.status(400).json(invalidInputTypeMsg);
+    }
+
+    const result = await clientService.getPaymentByPaymentId(paymentId);
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.verifyPayment = async (req, res, next) => {
   try {
     const paymentId = parseInt(req.params.paymentId, 10);

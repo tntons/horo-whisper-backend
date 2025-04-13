@@ -40,7 +40,24 @@ exports.getTellerPackageById = async (tellerId) => {
   return packages;
 }
 
-exports.getUpcomingSessionByTellerId = async (tellerId) => {
+exports.getSessionByTellerId = async (type, tellerId) => {
+
+  if (type != "upcoming" && type != "past" && type != "current") {
+    throw new AppError(400, 'INVALID_SESSION_TYPE', 'Invalid session type');
+  }
+
+  const sessionStatus = {
+    upcoming: "Pending",
+    past: "Ended",
+    current: "Active"
+  }
+  const paymentStatus = {
+    upcoming: "Disabled",
+    past: "Completed",
+    current: "Completed"
+  }
+
+
   const teller = await prisma.Teller.findUnique({
     where: {
       id: tellerId
@@ -49,7 +66,7 @@ exports.getUpcomingSessionByTellerId = async (tellerId) => {
       id: true,
       sessions: {
         where: {
-          sessionStatus: "Pending"
+          sessionStatus: sessionStatus[type]
         },
         select: {
           id: true,
@@ -57,6 +74,7 @@ exports.getUpcomingSessionByTellerId = async (tellerId) => {
           tellerId: true,
           sessionStatus: true,
           createdAt: true,
+          endedAt: true,
           customer: {
             select: {
               user: {
@@ -68,7 +86,7 @@ exports.getUpcomingSessionByTellerId = async (tellerId) => {
               payments: {
                 where: {
                   AND: [
-                    { status: "Disabled" },
+                    { status: paymentStatus[type] },
                     { package: { tellerId: tellerId } },
                   ]
                 },
@@ -92,9 +110,10 @@ exports.getUpcomingSessionByTellerId = async (tellerId) => {
   }
 
   if (!teller.sessions || teller.sessions.length === 0) {
-    throw new AppError(404, 'NO_UPCOMING_SESSIONS', 'No upcoming sessions found for this teller');
+    throw new AppError(404, 'NO_SESSIONS', 'No Session found for this teller');
   }
 
+  //a customer may have multiple payment, ASSUME coresspond Payment has the same id as sessionId
   const filteredSession = {
     ...teller,
     sessions: teller.sessions.map(session => ({
@@ -108,42 +127,53 @@ exports.getUpcomingSessionByTellerId = async (tellerId) => {
     }))
   };
 
+  //format result information
   const formattedSession = {
     tellerId: filteredSession.id,
     sessions: filteredSession.sessions.map(session => {
-        // Format date and time in Thai timezone
-        const thaiDateTime = new Date(session.createdAt).toLocaleString('en-US', {
-            timeZone: 'Asia/Bangkok',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
+
+      // Format date and time in Thai timezone
+      const convertToThaiDateTime = (date) => {
+        return new Date(date).toLocaleString('en-US', {
+          timeZone: 'Asia/Bangkok',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
         });
+      };
 
-        console.log(thaiDateTime);
-        // Split into date and time
-        const [thaiDate, thaiTime] = thaiDateTime.split(', ');
 
-        return {
-            sessionId: session.id,
-            date: thaiDate,
-            time: thaiTime,
-            customerId: session.customerId,
-            username: session.customer.user.username,
-            sessionStatus: session.sessionStatus,
-            packageId: session.customer.payments[0].package.id,
-            questionNumber: session.customer.payments[0].package.questionNumber,
-            price: session.customer.payments[0].package.price,
-            paymentId: session.customer.payments[0].id,
-        };
+      const formatDateTime = (timestamp) => {
+        const thaiDateTime = convertToThaiDateTime(timestamp);
+        const [date, time] = thaiDateTime.split(', ');
+        return { date, time };
+      };
+
+      return {
+        sessionId: session.id,
+        customerId: session.customerId,
+        username: session.customer.user.username,
+        sessionStatus: session.sessionStatus,
+        packageId: session.customer.payments[0].package.id,
+        questionNumber: session.customer.payments[0].package.questionNumber,
+        price: session.customer.payments[0].package.price,
+        paymentId: session.customer.payments[0].id,
+        createdDate: formatDateTime(session.createdAt).date,
+        createdTime: formatDateTime(session.createdAt).time,
+        endedDate: session.endedAt ? formatDateTime(session.endedAt).date : null,
+        endedTime: session.endedAt ? formatDateTime(session.endedAt).time : null,
+      };
     })
-};
+  };
 
   return formattedSession;
 }
+
+
 
 exports.patchPaymentStatus = async (paymentId, status) => {
   const newStatus = status === "Processing" ? "Pending" : "Declined";
