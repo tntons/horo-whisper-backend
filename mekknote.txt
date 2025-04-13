@@ -29,11 +29,21 @@ Route: /tellers/upcoming-session/:tellerId
 
 @Accept Session 
 METHOD: PATCH
-Route:/tellers/accept-session/:sessionId
+Route:/tellers/accept-session/:sessionId 
+[sessionStatus: "Processing", paymentStatus: "Pending"]
 
 @Decline Session 
 METHOD: PATCH
 Route:/tellers/decline-session/:sessionId
+[sessionStatus: "Declined", paymentStatus: "Declined"]
+
+
+PAGE: Payment:
+
+
+@verify payment
+METHOD: GET
+Route:/customers/verify-payment/:paymentID
 
 
 

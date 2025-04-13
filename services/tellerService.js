@@ -137,6 +137,7 @@ exports.getUpcomingSessionByTellerId = async (tellerId) => {
             packageId: session.customer.payments[0].package.id,
             questionNumber: session.customer.payments[0].package.questionNumber,
             price: session.customer.payments[0].package.price,
+            paymentId: session.customer.payments[0].id,
         };
     })
 };
