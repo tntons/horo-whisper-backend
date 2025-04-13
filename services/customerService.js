@@ -29,21 +29,33 @@ exports.verifyPayment = async (paymentId) => {
   if (!existingPayment) {
     throw new AppError(404, 'PAYMENT_NOT_FOUND', 'Payment not found');
   }
-  if (existingPayment.status != 'Pending' && existingPayment.status != 'Completed') {
+  if ((existingPayment.status != 'Pending') && (existingPayment.status != 'Completed')) {
     throw new AppError(400, 'PAYMENT_STATUS_ERROR', 'Payment status is not pending or completed');
   }
 
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise(resolve => setTimeout(resolve, 2000)); //just some mock-up delay
 
 
   //MUST UPDATE THE STATUSSSSSSSSSSSSS
 
-  const updatedPayment = await prisma.Payment.update({
-    where: { id: paymentId },
-    data:{status: 'Completed'}
-  })
+  const result = await prisma.$transaction(async (tx) => {
+    // Update payment
+    const updatedPayment = await tx.payment.update({
+        where: { id: paymentId },
+        data: { status: 'Completed' }
+    });
 
-  return updatedPayment;
+    // Update session
+    const updatedSession = await tx.session.update({
+        where: { id: paymentId },
+        data: { sessionStatus: 'Active' }
+    });
+
+    return { updatedPayment, updatedSession };
+  });
+
+  return result;
+
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw new AppError(500, 'UPDATE_PAYMENTSTATUS_ERROR', 'Error updating payment status');
