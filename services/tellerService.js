@@ -43,71 +43,105 @@ exports.getTellerPackageById = async (tellerId) => {
 exports.getUpcomingSessionByTellerId = async (tellerId) => {
   const teller = await prisma.Teller.findUnique({
     where: {
-        id: tellerId
+      id: tellerId
     },
-    select:{
-        id: true,
-        sessions: {
-            where:{
-                sessionStatus: "Pending"
-            },
-            select:{
-                id: true,
-                customerId: true,
-                tellerId: true,
-                sessionStatus: true,
-                customer:{
-                    select:{
-                        user:{
-                            select:{
-                                id: true,
-                                username: true
-                            }
-                        },
-                        payments:{
-                            where:{
-                                AND:[
-                                    {status: "Disabled"},
-                                    {package:{tellerId: tellerId}},
-                                ]
-                            },
-                            select:{
-                                id: true,
-                                customerId: true,
-                                packageId: true,
-                                status: true,
-                                package:true
-                            }
-                        }
-                    }
+    select: {
+      id: true,
+      sessions: {
+        where: {
+          sessionStatus: "Pending"
+        },
+        select: {
+          id: true,
+          customerId: true,
+          tellerId: true,
+          sessionStatus: true,
+          createdAt: true,
+          customer: {
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  username: true
+                }
+              },
+              payments: {
+                where: {
+                  AND: [
+                    { status: "Disabled" },
+                    { package: { tellerId: tellerId } },
+                  ]
                 },
+                select: {
+                  id: true,
+                  customerId: true,
+                  packageId: true,
+                  status: true,
+                  package: true
+                }
+              }
             }
+          },
         }
+      }
     }
-});
+  });
 
-if (!teller) {
-  throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
-}
+  if (!teller) {
+    throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
+  }
 
-if (!teller.sessions || teller.sessions.length === 0) {
-  throw new AppError(404, 'NO_UPCOMING_SESSIONS', 'No upcoming sessions found for this teller');
-}
+  if (!teller.sessions || teller.sessions.length === 0) {
+    throw new AppError(404, 'NO_UPCOMING_SESSIONS', 'No upcoming sessions found for this teller');
+  }
 
-const filteredSession = {
+  const filteredSession = {
     ...teller,
     sessions: teller.sessions.map(session => ({
-        ...session,
-        customer: {
-            ...session.customer,
-            payments: session.customer.payments.filter(payment => 
-                payment.id === session.id
-            )
-        }
+      ...session,
+      customer: {
+        ...session.customer,
+        payments: session.customer.payments.filter(payment =>
+          payment.id === session.id
+        )
+      }
     }))
+  };
+
+  const formattedSession = {
+    tellerId: filteredSession.id,
+    sessions: filteredSession.sessions.map(session => {
+        // Format date and time in Thai timezone
+        const thaiDateTime = new Date(session.createdAt).toLocaleString('en-US', {
+            timeZone: 'Asia/Bangkok',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        console.log(thaiDateTime);
+        // Split into date and time
+        const [thaiDate, thaiTime] = thaiDateTime.split(', ');
+
+        return {
+            sessionId: session.id,
+            date: thaiDate,
+            time: thaiTime,
+            customerId: session.customerId,
+            username: session.customer.user.username,
+            sessionStatus: session.sessionStatus,
+            packageId: session.customer.payments[0].package.id,
+            questionNumber: session.customer.payments[0].package.questionNumber,
+            price: session.customer.payments[0].package.price,
+        };
+    })
 };
 
-return filteredSession;
+  return formattedSession;
 }
 
 exports.patchPaymentStatus = async (paymentId, status) => {
@@ -157,7 +191,7 @@ exports.patchSessionStatus = async (sessionId, status) => {
       });
 
       // Update the related payment
-      await exports.patchPaymentStatus(sessionId,status);
+      await exports.patchPaymentStatus(sessionId, status);
 
       return updatedSession;
     });
