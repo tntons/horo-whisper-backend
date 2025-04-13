@@ -38,15 +38,31 @@ Route:/tellers/decline-session/:sessionId
 [sessionStatus: "Declined", paymentStatus: "Declined"]
 
 
+PAGE: Past Session:
+
+@Load Past Session for a Specific Teller
+METHOD: GET
+Route: /teller/past-session/:tellerId
+
+
 PAGE: Payment:
 
-@get Payment Information
+@Get Payment Information
 METHOD: GET
 ROUTE:/customers/get-payment/:paymentId
 
-@verify payment
-METHOD: GET
+@Verify payment
+METHOD: PATCH
 Route:/customers/verify-payment/:paymentId
+[sessionStatus: "Active", paymentStatus: "Completed"]
+
+
+Page: Teller Chat
+
+@End Session
+METHOD: PATCH
+Route:/tellers/end-session/:sessionId
+
 
 
 

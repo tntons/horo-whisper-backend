@@ -200,7 +200,7 @@ exports.patchPaymentStatus = async (paymentId, status) => {
 
 exports.patchSessionStatus = async (sessionId, status) => {
   try {
-    // First check if session exists
+
     const existingSession = await prisma.Session.findUnique({
       where: { id: sessionId }
     });
@@ -209,20 +209,23 @@ exports.patchSessionStatus = async (sessionId, status) => {
       throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
     }
 
-    // Check if session is in a valid state to be accepted
-    if (existingSession.sessionStatus !== 'Pending') {
-      throw new AppError(400, 'INVALID_SESSION_STATUS', 'Session can only be accepted when in pending status');
-    }
-
+    //Scenario:
+    //session with "Pending" status -> sessionStatus = "Processing" or "Declined", paymentStatus = "Pending" or "Declined"
+    //session with "Active" status -> sessionStatus = "Ended"
     // Update session within a transaction to ensure consistency
     const session = await prisma.$transaction(async (prisma) => {
+
       const updatedSession = await prisma.Session.update({
         where: { id: sessionId },
-        data: { sessionStatus: status }
+        data: { sessionStatus: status,
+          endedAt: status == "Ended" ? new Date() : null
+        }
       });
 
       // Update the related payment
+      if(status =="Processing"){
       await exports.patchPaymentStatus(sessionId, status);
+      }
 
       return updatedSession;
     });

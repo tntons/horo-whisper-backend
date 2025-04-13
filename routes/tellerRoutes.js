@@ -12,5 +12,6 @@ router.get('/upcoming-session/:tellerId', tellerController.getUpcomingSessionByT
 router.get('/past-session/:tellerId', tellerController.getPastSessionByTellerId);
 router.patch('/accept-session/:sessionId', tellerController.patchAcceptSession);
 router.patch('/decline-session/:sessionId', tellerController.patchDeclineSession);
+router.patch('/end-session/:sessionId', tellerController.patchEndSession);
 
 module.exports = router;
