@@ -24,14 +24,23 @@ exports.bookSession = async (sessionData, paymentData) => {
 exports.getPaymentByPaymentId = async (paymentId) => {
   try{
   const payment = await prisma.Payment.findUnique({
-    where: { id: paymentId }
+    where: { id: paymentId },
+    select:{
+      id: true,
+      customerId: true,
+      status: true,
+      createdAt: true,
+      status: true,
+      package:true
+    }
+
   });
 
   return payment;
-  
+
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError(500, 'GET_PAYMENT_ERROR', 'Error getting payment');
+    throw new AppError(500, 'GET_PAYMENT_ERROR', error.message);
   }
 };
 

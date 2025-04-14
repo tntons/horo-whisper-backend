@@ -113,6 +113,27 @@ exports.getPastSessionByTellerId = async (req, res, next) => {
   }
 };
 
+exports.getCurrentSessionByTellerId = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.tellerId, 10);
+
+    // check if tellerId is a number
+    if (isNaN(tellerId)) {
+      return res.status(400).json(invalidInputTypeMsg);
+    }
+
+    const result = await tellerService.getSessionByTellerId("current",tellerId);
+
+    return res.status(200).json({
+      success:true,
+      data: result
+    });
+
+  } catch (err) {
+    next(err);
+  }
+}
+
 exports.patchAcceptSession = async (req, res, next) => {
   try {
     const sessionId = parseInt(req.params.sessionId, 10);
