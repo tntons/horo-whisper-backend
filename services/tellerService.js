@@ -76,10 +76,55 @@ exports.getAllBrowseTellers = async () => {
 
 // Get teller by ID
 exports.getTellerById = async (id) => {
-  return await prisma.teller.findUnique({
-    where: { id },
-  });
-}
+  try {
+    const teller = await prisma.Teller.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            username: true, // Fetch the teller's name
+          },
+        },
+        packages: true, // Fetch all teller packages
+        sessions: {
+          select: {
+            reviews:  true, // Fetch all reviews
+          },
+        },
+      },
+    });
+
+    if (!teller) {
+      throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
+    }
+
+    // Extract all reviews from sessions
+    const allReviews = teller.sessions.flatMap((session) => session.reviews);
+
+    // Calculate the total number of reviews and average rating
+    const totalNumberOfReviews = allReviews.length;
+    const averageRating =
+      totalNumberOfReviews > 0
+        ? allReviews.reduce((sum, review) => sum + review.rating, 0) / totalNumberOfReviews
+        : 0;
+
+    // Format the response
+    return {
+      tellerId: teller.id,
+      tellerName: teller.user.username,
+      specialty: teller.specialty,
+      bio: teller.bio,
+      traffic: teller.traffic,
+      totalNumberOfReviews,
+      averageRating,
+      packages: teller.packages, // All teller packages
+      reviews: allReviews, // All review ratings
+    };
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'FETCH_TELLER_ERROR', 'Error fetching teller details');
+  }
+};
 
 exports.updateTellerById = async (tellerId, updateData) => {
   try {
