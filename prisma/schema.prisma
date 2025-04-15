@@ -57,7 +57,7 @@ model Teller {
   identificationNumber String?
   bankName             String?
   bankAccountNumber    String?
-  specialty            String?
+  specialty            String[]
   bio                  String?
   verificationStatus   String?
   traffic              Int?
