@@ -1,0 +1,69 @@
+PAGE: Choose Package:
+
+@Load Teller Package
+METHOD: GET
+Route: /tellers/teller-package/:tellerId
+
+@Click Book
+METHOD: POST
+Route: /customers/book-session
+Body:{
+    "sessionData":{
+        "customerId":1,
+        "tellerId":1,
+        "sessionStatus":"Pending"
+    },
+    "paymentData":{
+        "customerId":1,
+        "packageId":1,
+        "status":"Disabled"
+    }
+}
+
+
+PAGE: Upcoming Session:
+
+@Load Upcoming Session for a Specific Teller
+METHOD: GET
+Route: /tellers/upcoming-session/:tellerId
+
+@Accept Session 
+METHOD: PATCH
+Route:/tellers/accept-session/:sessionId 
+[sessionStatus: "Processing", paymentStatus: "Pending"]
+
+@Decline Session 
+METHOD: PATCH
+Route:/tellers/decline-session/:sessionId
+[sessionStatus: "Declined", paymentStatus: "Declined"]
+
+
+PAGE: Past Session:
+
+@Load Past Session for a Specific Teller
+METHOD: GET
+Route: /teller/past-session/:tellerId
+
+
+PAGE: Payment:
+
+@Get Payment Information
+METHOD: GET
+ROUTE:/customers/get-payment/:paymentId
+
+@Verify payment
+METHOD: PATCH
+Route:/customers/verify-payment/:paymentId
+[sessionStatus: "Active", paymentStatus: "Completed"]
+
+
+Page: Teller Chat
+
+@End Session
+METHOD: PATCH
+Route:/tellers/end-session/:sessionId
+
+
+
+
+
