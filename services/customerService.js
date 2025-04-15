@@ -2,6 +2,28 @@ const { PrismaClient } = require('@prisma/client');
 const { AppError } = require('../middleware/errorHandler');
 const prisma = new PrismaClient();
 
+exports.createCustomer = async ({ userId, profilePic }) => {
+  try {
+    // Validate that the user exists
+    const user = await prisma.User.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+    }
+
+    // Create the customer
+    const newCustomer = await prisma.Customer.create({
+      data: {
+        userId,
+        profilePic,
+      },
+    });
+
+    return newCustomer;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'CREATE_CUSTOMER_ERROR', 'Error creating customer');
+  }
+};
 
 exports.bookSession = async (sessionData, paymentData) => {
   return await prisma.$transaction(async (tx) => {

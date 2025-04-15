@@ -20,4 +20,6 @@ router.get('/:tellerId/upcoming-session', tellerController.getUpcomingSessionByT
 router.get('/:tellerId/past-session', tellerController.getPastSessionByTellerId);
 router.get('/:tellerId/current-session', tellerController.getCurrentSessionByTellerId);
 
+router.post('/reviews', tellerController.postReview);
+
 module.exports = router;

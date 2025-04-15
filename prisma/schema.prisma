@@ -83,12 +83,14 @@ model Payment {
   id             Int      @id @default(autoincrement())
   customerId     Int
   packageId      Int
+  sessionId      Int      @unique
   paymentEvidence String?
   createdAt      DateTime @default(now())
   status         String
 
   customer       Customer     @relation(fields: [customerId], references: [id])
   package        TellerPackage @relation(fields: [packageId], references: [id])
+  session        Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model Session {
@@ -98,11 +100,13 @@ model Session {
   createdAt     DateTime @default(now())
   endedAt       DateTime?
   sessionStatus String
+  paymentId     Int       @unique
 
   customer      Customer  @relation(fields: [customerId], references: [id])
   teller        Teller    @relation(fields: [tellerId], references: [id])
   reviews       Review[]
   chats         Chat[]
+  payment       Payment?
 }
 
 model Review {

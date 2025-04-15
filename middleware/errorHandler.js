@@ -10,6 +10,7 @@ class AppError extends Error {
 
 // Global error handling middleware
 const errorHandler = (err, req, res, next) => {
+    console.error(err);
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 

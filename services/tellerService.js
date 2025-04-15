@@ -369,29 +369,37 @@ exports.patchSessionStatus = async (sessionId, status) => {
   try {
 
     const existingSession = await prisma.Session.findUnique({
-      where: { id: sessionId }
+      where: { id: sessionId },
+      include: {
+        payments: true,
+      },
     });
 
     if (!existingSession) {
       throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
     }
 
+    const paymentId = existingSession.payments?.[0]?.id;
+    if (!paymentId) {
+      throw new AppError(404, 'PAYMENT_NOT_FOUND', 'No payment found for this session');
+    }
+
     //Scenario:
     //session with "Pending" status -> sessionStatus = "Processing" or "Declined", paymentStatus = "Pending" or "Declined"
     //session with "Active" status -> sessionStatus = "Ended"
     // Update session within a transaction to ensure consistency
-    const session = await prisma.$transaction(async (prisma) => {
+    const session = await prisma.$transaction(async (tx) => {
 
-      const updatedSession = await prisma.Session.update({
+      const updatedSession = await tx.Session.update({
         where: { id: sessionId },
         data: { sessionStatus: status,
-          endedAt: status == "Ended" ? new Date() : null
+          endedAt: status === "Ended" ? new Date() : null
         }
       });
 
       // Update the related payment
-      if(status =="Processing"){
-      await exports.patchPaymentStatus(sessionId, status);
+      if(status === "Processing"){
+        await exports.patchPaymentStatus(paymentId, status);
       }
 
       return updatedSession;
@@ -404,4 +412,36 @@ exports.patchSessionStatus = async (sessionId, status) => {
   }
 };
 
+exports.getSessionById = async (sessionId) => {
+  try {
+    const session = await prisma.Session.findUnique({
+      where: { id: sessionId },
+      select: {
+        id: true,
+        sessionStatus: true,
+      },
+    });
 
+    return session;
+  } catch (error) {
+    throw new AppError(500, 'FETCH_SESSION_ERROR', 'Error fetching session');
+  }
+};
+
+exports.createReview = async ({ sessionId, rating, comment }) => {
+  try {
+    // Create the review
+    const newReview = await prisma.Review.create({
+      data: {
+        sessionId,
+        rating,
+        comment,
+        reviewAt: new Date(),
+      },
+    });
+
+    return newReview;
+  } catch (error) {
+    throw new AppError(500, 'CREATE_REVIEW_ERROR', 'Error creating review');
+  }
+};

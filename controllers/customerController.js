@@ -1,4 +1,4 @@
-const clientService = require('../services/customerService.js');
+const customerService = require('../services/customerService.js');
 
 const invalidInputTypeMsg={
   status: 'error',
@@ -6,10 +6,35 @@ const invalidInputTypeMsg={
   message: 'Invalid Input Type'
 }
 
+exports.createCustomer = async (req, res, next) => {
+  try {
+    const { userId, profilePic = null } = req.body;
+
+    // Validate input
+    if (!userId) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_INPUT',
+        message: 'userId is required.',
+      });
+    }
+
+    // Call the service to create the customer
+    const newCustomer = await customerService.createCustomer({ userId, profilePic });
+
+    return res.status(201).json({
+      success: true,
+      data: newCustomer,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.bookSession = async (req, res, next) => {
   try {
     const {sessionData, paymentData} = req.body; 
-    const result = await clientService.bookSession(sessionData, paymentData);
+    const result = await customerService.bookSession(sessionData, paymentData);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -24,7 +49,7 @@ exports.getPaymentByPaymentId = async (req, res, next) => {
       return res.status(400).json(invalidInputTypeMsg);
     }
 
-    const result = await clientService.getPaymentByPaymentId(paymentId);
+    const result = await customerService.getPaymentByPaymentId(paymentId);
 
     return res.status(200).json({
       success: true,
@@ -43,7 +68,7 @@ exports.verifyPayment = async (req, res, next) => {
       return res.status(400).json(invalidInputTypeMsg);
     }
 
-    const result = await clientService.verifyPayment(paymentId);
+    const result = await customerService.verifyPayment(paymentId);
 
 
     return res.status(200).json({

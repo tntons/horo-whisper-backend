@@ -288,3 +288,46 @@ exports.patchEndSession = async (req, res, next) => {
     next(err);
   }
 }
+
+exports.postReview = async (req, res, next) => {
+  try {
+    const { sessionId, rating, comment } = req.body;
+
+    // Validate input
+    if (!sessionId || isNaN(rating) || rating < 0 || rating > 5) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_INPUT',
+        message: 'Invalid sessionId or rating. Rating must be between 0 and 5.',
+      });
+    }
+
+    // Check if the session exists and has a status of "Ended"
+    const session = await tellerService.getSessionById(sessionId);
+    if (!session) {
+      return res.status(404).json({
+        status: 'error',
+        code: 'SESSION_NOT_FOUND',
+        message: 'Session not found',
+      });
+    }
+
+    if (session.sessionStatus !== 'Ended') {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_SESSION_STATUS',
+        message: 'Review can only be created for past-session".',
+      });
+    }
+
+    // Call the service to create the review
+    const newReview = await tellerService.createReview({ sessionId, rating, comment });
+
+    return res.status(201).json({
+      success: true,
+      data: newReview,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
