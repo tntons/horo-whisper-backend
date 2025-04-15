@@ -43,6 +43,33 @@ exports.getTellerById = async (req, res, next) => {
   }
 };
 
+exports.patchTellerById = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.id, 10);
+
+    // Validate tellerId
+    if (isNaN(tellerId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid Input Type',
+      });
+    }
+
+    const updateData = req.body; // Expecting JSON with fields to update
+
+    // Call the service to update the teller
+    const updatedTeller = await tellerService.updateTellerById(tellerId, updateData);
+
+    return res.status(200).json({
+      success: true,
+      data: updatedTeller,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // POST /tellers
 exports.createTeller = async (req, res, next) => {
   try {

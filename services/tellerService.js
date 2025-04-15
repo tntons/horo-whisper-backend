@@ -81,6 +81,30 @@ exports.getTellerById = async (id) => {
   });
 }
 
+exports.updateTellerById = async (tellerId, updateData) => {
+  try {
+    // Validate that the teller exists
+    const existingTeller = await prisma.Teller.findUnique({
+      where: { id: tellerId },
+    });
+
+    if (!existingTeller) {
+      throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
+    }
+
+    // Update the teller
+    const updatedTeller = await prisma.Teller.update({
+      where: { id: tellerId },
+      data: updateData,
+    });
+
+    return updatedTeller;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'UPDATE_TELLER_ERROR', 'Error updating teller');
+  }
+};
+
 // Create a new teller
 exports.createTeller = async (data) => {
   return await prisma.teller.create({ data });
