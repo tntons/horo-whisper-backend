@@ -8,14 +8,141 @@ generator client {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
+  id                Int       @id @default(autoincrement())
+  username          String
+  password          String
+  firstName         String?
+  lastName          String?
+  birthDate         DateTime?
+  registrationDate  DateTime  @default(now())
+  accountStatus     String
+  email             String    @unique
+  phoneNumber       String?
+
+  customer          Customer?
+  teller            Teller?
+  chats             Chat[]
+}
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  profilePic String?
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  prediction PredictionAttribute?
+  sessions   Session[]
+  payments   Payment[]
+  reports    Report[]
+}
+
+model PredictionAttribute {
+  id           Int     @id @default(autoincrement())
+  customerId   Int     @unique
+  birthPlace   String?
+  birthTime    String?
+  zodiacSign   String?
+  career       String?
+  relationship String?
+
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
 
 model Teller {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
+  id                   Int      @id @default(autoincrement())
+  userId               Int      @unique
+  profilePic           String?
+  identificationCard   String?
+  identificationNumber String?
+  bankName             String?
+  bankAccountNumber    String?
+  specialty            String?
+  bio                  String?
+  verificationStatus   String?
+  traffic              Int?
+
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packages             TellerPackage[]
+  sessions             Session[]
+  reports              Report[]
 }
 
+model TellerPackage {
+  id            Int     @id @default(autoincrement())
+  tellerId      Int
+  packageDetail String?
+  questionNumber Int?
+  price         Float
+
+  teller        Teller  @relation(fields: [tellerId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+}
+
+model Payment {
+  id             Int      @id @default(autoincrement())
+  customerId     Int
+  packageId      Int
+  paymentEvidence String
+  createdAt      DateTime @default(now())
+  status         String
+
+  customer       Customer     @relation(fields: [customerId], references: [id])
+  package        TellerPackage @relation(fields: [packageId], references: [id])
+}
+
+model Session {
+  id            Int      @id @default(autoincrement())
+  customerId    Int
+  tellerId      Int
+  createdAt     DateTime @default(now())
+  endedAt       DateTime?
+  sessionStatus String
+
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  teller        Teller    @relation(fields: [tellerId], references: [id])
+  reviews       Review[]
+  chats         Chat[]
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int
+  rating     Int
+  comment    String?
+  reviewAt   DateTime @default(now())
+
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int
+  senderId   Int
+  content    String
+  createdAt  DateTime @default(now())
+
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id           Int      @id @default(autoincrement())
+  customerId   Int
+  tellerId     Int
+  reportReason String
+  reportEvidence String?
+  reportType   String?
+  createdAt    DateTime @default(now())
+  status       String
+
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  teller       Teller   @relation(fields: [tellerId], references: [id], onDelete: Cascade)
+}
+
+model Admin {
+  id       Int    @id @default(autoincrement())
+  username String
+  password String
+  email    String @unique
+}
