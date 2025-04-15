@@ -371,7 +371,7 @@ exports.patchSessionStatus = async (sessionId, status) => {
     const existingSession = await prisma.Session.findUnique({
       where: { id: sessionId },
       include: {
-        payments: true,
+        payment: true,
       },
     });
 
@@ -379,7 +379,7 @@ exports.patchSessionStatus = async (sessionId, status) => {
       throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
     }
 
-    const paymentId = existingSession.payments?.[0]?.id;
+    const paymentId = existingSession.paymentId;
     if (!paymentId) {
       throw new AppError(404, 'PAYMENT_NOT_FOUND', 'No payment found for this session');
     }
