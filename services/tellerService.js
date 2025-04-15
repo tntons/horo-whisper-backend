@@ -88,7 +88,23 @@ exports.getTellerById = async (id) => {
         packages: true, // Fetch all teller packages
         sessions: {
           select: {
-            reviews:  true, // Fetch all reviews
+            reviews: {
+              include: {
+                session: {
+                  select: {
+                    customer: {
+                      select: {
+                        user: {
+                          select: {
+                            username: true, // Fetch the customer's username
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -98,8 +114,16 @@ exports.getTellerById = async (id) => {
       throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
     }
 
-    // Extract all reviews from sessions
-    const allReviews = teller.sessions.flatMap((session) => session.reviews);
+    // Extract all reviews from sessions and include customerName
+    const allReviews = teller.sessions.flatMap((session) =>
+      session.reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        reviewAt: review.reviewAt,
+        customerName: review.customer?.user?.username || 'Anonymous', // Include customerName
+      }))
+    );
 
     // Calculate the total number of reviews and average rating
     const totalNumberOfReviews = allReviews.length;
@@ -118,7 +142,7 @@ exports.getTellerById = async (id) => {
       totalNumberOfReviews,
       averageRating,
       packages: teller.packages, // All teller packages
-      reviews: allReviews, // All review ratings
+      reviews: allReviews, // All reviews with customerName
     };
   } catch (error) {
     if (error instanceof AppError) throw error;
