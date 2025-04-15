@@ -10,7 +10,10 @@ const invalidInputTypeMsg={
 exports.getAllTellers = async (req, res, next) => {
   try {
     const tellers = await tellerService.getAllTellers();
-    res.json(tellers);
+    return res.status(200).json({
+      success: true,
+      data: tellers,
+    });
   } catch (err) {
     next(err);
   }

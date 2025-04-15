@@ -4,8 +4,65 @@ const prisma = new PrismaClient();
 
 // Get all tellers
 exports.getAllTellers = async () => {
-  return await prisma.teller.findMany();
-}
+  try {
+    const tellers = await prisma.Teller.findMany({
+      include: {
+        user: {
+          select: {
+            username: true, // Fetch the teller's name from the User table
+          },
+        },
+        packages: {
+          select: {
+            price: true, // Fetch package prices to calculate the minimum price
+          },
+        },
+        sessions: {
+          select: {
+            reviews: {
+              select: {
+                rating: true, // Fetch ratings to calculate the average rating
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Format the data
+    const formattedTellers = tellers.map((teller) => {
+      // Calculate the total number of reviews and average rating
+      const allRatings = teller.sessions.flatMap((session) =>
+        session.reviews.map((review) => review.rating)
+      );
+      const totalReviews = allRatings.length;
+      const averageRating =
+        totalReviews > 0
+          ? allRatings.reduce((sum, rating) => sum + rating, 0) / totalReviews
+          : 0;
+
+      // Find the minimum package price
+      const minPrice = teller.packages.length
+        ? Math.min(...teller.packages.map((pkg) => pkg.price))
+        : null;
+
+      return {
+        tellerId: teller.id,
+        tellerName: teller.user.username,
+        totalReviews,
+        averageRating,
+        minPrice,
+        specialty: teller.specialty,
+        bio: teller.bio,
+        traffic: teller.traffic,
+      };
+    });
+
+    return formattedTellers;
+  } catch (error) {
+    throw new AppError(500, 'FETCH_TELLERS_ERROR', 'Error fetching tellers');
+  }
+};
 
 // Get all tellers name
 exports.getAllBrowseTellers = async () => {
