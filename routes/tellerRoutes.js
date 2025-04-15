@@ -7,12 +7,16 @@ router.get('/browse', tellerController.getAllBrowseTellers);
 router.get('/:id', tellerController.getTellerById);
 router.post('/', tellerController.createTeller);
 
-router.get('/teller-package/:tellerId', tellerController.getTellerPackageById);
-router.get('/upcoming-session/:tellerId', tellerController.getUpcomingSessionByTellerId);
-router.get('/past-session/:tellerId', tellerController.getPastSessionByTellerId);
-router.get('/current-session/:tellerId', tellerController.getCurrentSessionByTellerId);
 router.patch('/accept-session/:sessionId', tellerController.patchAcceptSession);
 router.patch('/decline-session/:sessionId', tellerController.patchDeclineSession);
 router.patch('/end-session/:sessionId', tellerController.patchEndSession);
+
+router.post('/:tellerId/teller-package', tellerController.postTellerPackageByTellerId);
+router.delete('/:tellerId/teller-package', tellerController.deleteTellerPackageByTellerId);
+router.get('/:tellerId/teller-package', tellerController.getTellerPackageByTellerId);
+
+router.get('/:tellerId/upcoming-session', tellerController.getUpcomingSessionByTellerId);
+router.get('/:tellerId/past-session', tellerController.getPastSessionByTellerId);
+router.get('/:tellerId/current-session', tellerController.getCurrentSessionByTellerId);
 
 module.exports = router;

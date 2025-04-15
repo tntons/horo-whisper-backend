@@ -51,7 +51,70 @@ exports.createTeller = async (req, res, next) => {
   }
 };
 
-exports.getTellerPackageById = async (req, res, next) => {
+exports.postTellerPackageByTellerId = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.tellerId, 10);
+
+    // Validate tellerId
+    if (isNaN(tellerId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid Input Type',
+      });
+    }
+
+    const packageData = req.body; // Expecting JSON: { packageDetail, questionNumber, price }
+
+    // Call the service to create the package
+    const newPackage = await tellerService.createTellerPackage(tellerId, packageData);
+
+    return res.status(201).json({
+      success: true,
+      data: newPackage,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteTellerPackageByTellerId = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.tellerId, 10);
+
+    // Validate tellerId
+    if (isNaN(tellerId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid Input Type',
+      });
+    }
+
+    const packageId = parseInt(req.body.packageId, 10); // Assuming packageId is sent in the request body
+
+    // Validate packageId
+    if (isNaN(packageId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_PACKAGE_ID',
+        message: 'Invalid Package ID',
+      });
+    }
+
+    // Call the service to delete the package
+    await tellerService.deleteTellerPackage(tellerId, packageId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Teller package deleted successfully',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getTellerPackageByTellerId = async (req, res, next) => {
   try {
     const tellerId = parseInt(req.params.tellerId, 10);
 
@@ -60,7 +123,7 @@ exports.getTellerPackageById = async (req, res, next) => {
       return res.status(400).json(invalidInputTypeMsg);
     }
 
-    const package = await tellerService.getTellerPackageById(tellerId);
+    const package = await tellerService.getTellerPackageByTellerId(tellerId);
     return res.status(200).json({
       success: true,
       data: package

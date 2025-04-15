@@ -29,7 +29,49 @@ exports.createTeller = async (data) => {
   return await prisma.teller.create({ data });
 }
 
-exports.getTellerPackageById = async (tellerId) => {
+exports.createTellerPackage = async (tellerId, packageData) => {
+  const { packageDetail, questionNumber, price } = packageData;
+
+  // Validate required fields
+  if (!price || isNaN(price)) {
+    throw new AppError(400, 'INVALID_PACKAGE_DATA', 'Price is required and must be a number');
+  }
+
+  // Create the package
+  const newPackage = await prisma.TellerPackage.create({
+    data: {
+      tellerId,
+      packageDetail: packageDetail || null,
+      questionNumber: questionNumber || null,
+      price,
+    },
+  });
+
+  return newPackage;
+};
+
+exports.deleteTellerPackage = async (tellerId, packageId) => {
+  try {
+    // Validate that the package belongs to the teller
+    const existingPackage = await prisma.TellerPackage.findFirst({
+      where: { id: packageId, tellerId: tellerId },
+    });
+
+    if (!existingPackage) {
+      throw new AppError(404, 'PACKAGE_NOT_FOUND', 'Package not found or does not belong to the specified teller');
+    }
+
+    // Delete the package
+    await prisma.TellerPackage.delete({
+      where: { id: packageId },
+    });
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'DELETE_PACKAGE_ERROR', 'Error deleting teller package');
+  }
+};
+
+exports.getTellerPackageByTellerId = async (tellerId) => {
   const packages = await prisma.TellerPackage.findMany({
     where: { tellerId },
   });
