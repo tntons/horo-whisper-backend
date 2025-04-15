@@ -28,16 +28,29 @@ exports.createCustomer = async ({ userId, profilePic }) => {
 exports.bookSession = async (sessionData, paymentData) => {
   return await prisma.$transaction(async (tx) => {
 
-    const payment = await tx.Payment.create({
-      data: paymentData
+    // Create the session first
+    const session = await tx.Session.create({
+      data: sessionData,
     });
 
-    const session = await tx.Session.create({
-      data: sessionData
+    // Create the payment and link it to the session
+    const payment = await tx.Payment.create({
+      data: {
+        ...paymentData,
+        sessionId: session.id, // Link the payment to the session
+      },
     });
+
+    const updatedSession = await tx.Session.update({
+      where: { id: session.id },
+      data: {
+        paymentId: payment.id, // Link the payment to the session
+      },
+    });
+
 
     return {
-      session,
+      session: updatedSession,
       payment
     };
   });

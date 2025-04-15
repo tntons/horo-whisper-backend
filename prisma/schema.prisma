@@ -100,7 +100,7 @@ model Session {
   createdAt     DateTime @default(now())
   endedAt       DateTime?
   sessionStatus String
-  paymentId     Int       @unique
+  paymentId     Int?      @unique
 
   customer      Customer  @relation(fields: [customerId], references: [id])
   teller        Teller    @relation(fields: [tellerId], references: [id])

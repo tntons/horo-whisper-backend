@@ -33,9 +33,40 @@ exports.createCustomer = async (req, res, next) => {
 
 exports.bookSession = async (req, res, next) => {
   try {
-    const {sessionData, paymentData} = req.body; 
+    const { customerId, tellerId, packageId } = req.body;
+
+    // Validate input
+    if (!customerId || !tellerId || !packageId ) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_INPUT',
+        message: 'All fields (customerId, tellerId, packageId, paymentAmount) are required.',
+      });
+    }
+
+    // Prepare session data
+    const sessionData = {
+      customerId,
+      tellerId,
+      sessionStatus: 'Pending', // Default status
+      createdAt: new Date(),
+    };
+
+    // Prepare payment data
+    const paymentData = {
+      customerId,
+      packageId,
+      status: 'Disabled', // Default status
+      createdAt: new Date(),
+    };
+
+    // Call the service to book the session
     const result = await customerService.bookSession(sessionData, paymentData);
-    res.status(200).json(result);
+
+    return res.status(201).json({
+      success: true,
+      data: result,
+    });
   } catch (err) {
     next(err);
   }
