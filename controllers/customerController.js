@@ -111,3 +111,28 @@ exports.verifyPayment = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getSessionsByCustomerId = async (req, res, next) => {
+  try {
+    const customerId = parseInt(req.params.customerId, 10);
+
+    // Validate input
+    if (isNaN(customerId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid customerId',
+      });
+    }
+
+    // Call the service to fetch sessions
+    const sessions = await customerService.getSessionsByCustomerId(customerId);
+
+    return res.status(200).json({
+      success: true,
+      data: sessions,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

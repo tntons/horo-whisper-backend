@@ -8,5 +8,7 @@ router.post('/book-session', clientController.bookSession);
 router.get('/get-payment/:paymentId', clientController.getPaymentByPaymentId);
 router.patch('/verify-payment/:paymentId', clientController.verifyPayment);
 
+router.get('/sessions/:customerId', clientController.getSessionsByCustomerId);
+
 
 module.exports = router;

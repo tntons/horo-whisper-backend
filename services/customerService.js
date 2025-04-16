@@ -116,3 +116,29 @@ exports.verifyPayment = async (paymentId) => {
     throw new AppError(500, 'UPDATE_PAYMENTSTATUS_ERROR', 'Error updating payment status');
   }
 };
+
+exports.getSessionsByCustomerId = async (customerId) => {
+  try {
+    const sessions = await prisma.Session.findMany({
+      where: { customerId },
+      include: {
+        teller: {
+          select: {
+            user: {
+              select: {
+                username: true, // Include teller's username
+              },
+            },
+          },
+        },
+        reviews: true, // Include reviews for the session
+        chats: true,
+        payment: true, // Include payment details
+      },
+    });
+
+    return sessions;
+  } catch (error) {
+    throw new AppError(500, 'FETCH_SESSIONS_ERROR', 'Error fetching sessions for the customer');
+  }
+};
