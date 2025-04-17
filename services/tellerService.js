@@ -286,6 +286,7 @@ exports.getSessionByTellerId = async (type, tellerId) => {
     }
   });
 
+  console.log("printing")
   console.log(teller);
 
   if (!teller) {
@@ -301,10 +302,11 @@ exports.getSessionByTellerId = async (type, tellerId) => {
       ...session,
       customer: {
         ...session.customer,
-        payments: session.customer.payments.filter(payment => payment.sessionId === session.id)
+        payments: session.customer.payments.filter(payment => payment.id === session.id)
       }
     };
   });
+
   
   // Format result information
   const formattedSession = {
