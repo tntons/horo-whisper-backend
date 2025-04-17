@@ -239,15 +239,10 @@ exports.getSessionByTellerId = async (type, tellerId) => {
   }
 
   const sessionStatus = {
-    upcoming: "Pending",
-    past: "Ended",
-    current: "Active"
-  }
-  const paymentStatus = {
-    upcoming: "Disabled",
-    past: "Completed",
-    current: "Completed"
-  }
+    upcoming: ["Pending", "Processing"],
+    past: ["Ended", "Declined"],
+    current: ["Active"]
+  };
 
 
   const teller = await prisma.Teller.findUnique({
@@ -258,7 +253,9 @@ exports.getSessionByTellerId = async (type, tellerId) => {
       id: true,
       sessions: {
         where: {
-          sessionStatus: sessionStatus[type]
+          sessionStatus: {
+            in: sessionStatus[type]  // Use 'in' operator to match any of the statuses
+          }
         },
         select: {
           id: true,
@@ -276,17 +273,9 @@ exports.getSessionByTellerId = async (type, tellerId) => {
                 }
               },
               payments: {
-                where: {
-                  AND: [
-                    { status: paymentStatus[type] },
-                    { package: { tellerId: tellerId } },
-                  ]
-                },
                 select: {
                   id: true,
-                  customerId: true,
                   packageId: true,
-                  status: true,
                   package: true
                 }
               }
@@ -297,6 +286,8 @@ exports.getSessionByTellerId = async (type, tellerId) => {
     }
   });
 
+  console.log(teller);
+
   if (!teller) {
     throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
   }
@@ -305,25 +296,21 @@ exports.getSessionByTellerId = async (type, tellerId) => {
     throw new AppError(404, 'NO_SESSIONS', 'No Session found for this teller');
   }
 
-  //a customer may have multiple payment, ASSUME coresspond Payment has the same id as sessionId
-  const filteredSession = {
-    ...teller,
-    sessions: teller.sessions.map(session => ({
+  const filteredSessions = teller?.sessions.map(session => {
+    return {
       ...session,
       customer: {
         ...session.customer,
-        payments: session.customer.payments.filter(payment =>
-          payment.id === session.id
-        )
+        payments: session.customer.payments.filter(payment => payment.sessionId === session.id)
       }
-    }))
-  };
-
-  //format result information
+    };
+  });
+  
+  // Format result information
   const formattedSession = {
-    tellerId: filteredSession.id,
-    sessions: filteredSession.sessions.map(session => {
-
+    tellerId: teller.id,  // Use teller.id instead of filteredSession.id
+    sessions: filteredSessions.map(session => { 
+      
       // Format date and time in Thai timezone
       const convertToThaiDateTime = (date) => {
         return new Date(date).toLocaleString('en-US', {
@@ -336,23 +323,27 @@ exports.getSessionByTellerId = async (type, tellerId) => {
           hour12: false
         });
       };
-
-
+  
       const formatDateTime = (timestamp) => {
         const thaiDateTime = convertToThaiDateTime(timestamp);
         const [date, time] = thaiDateTime.split(', ');
         return { date, time };
       };
-
+  
+      // Make sure there's at least one payment before accessing its properties
+      const payment = session.customer.payments && session.customer.payments.length > 0 
+        ? session.customer.payments[0] 
+        : null;
+  
       return {
         sessionId: session.id,
         customerId: session.customerId,
         username: session.customer.user.username,
         sessionStatus: session.sessionStatus,
-        packageId: session.customer.payments[0].package.id,
-        questionNumber: session.customer.payments[0].package.questionNumber,
-        price: session.customer.payments[0].package.price,
-        paymentId: session.customer.payments[0].id,
+        packageId: payment?.package?.id || null,
+        questionNumber: payment?.package?.questionNumber || null,
+        price: payment?.package?.price || null,
+        paymentId: payment?.id || null,
         createdDate: formatDateTime(session.createdAt).date,
         createdTime: formatDateTime(session.createdAt).time,
         endedDate: session.endedAt ? formatDateTime(session.endedAt).date : null,
@@ -360,7 +351,7 @@ exports.getSessionByTellerId = async (type, tellerId) => {
       };
     })
   };
-
+  
   return formattedSession;
 }
 
