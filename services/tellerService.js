@@ -276,7 +276,8 @@ exports.getSessionByTellerId = async (type, tellerId) => {
                 select: {
                   id: true,
                   packageId: true,
-                  package: true
+                  package: true,
+                  sessionId: true
                 }
               }
             }
@@ -302,7 +303,7 @@ exports.getSessionByTellerId = async (type, tellerId) => {
       ...session,
       customer: {
         ...session.customer,
-        payments: session.customer.payments.filter(payment => payment.id === session.id)
+        payments: session.customer.payments.filter(payment => payment.sessionId === session.id)
       }
     };
   });
