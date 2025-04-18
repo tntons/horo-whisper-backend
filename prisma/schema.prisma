@@ -9,13 +9,13 @@ generator client {
 
 model User {
   id                Int       @id @default(autoincrement())
-  username          String
-  password          String
+  username          String    @default("default_username")
+  password          String    @default("default_password")
   firstName         String?
   lastName          String?
   birthDate         DateTime?
   registrationDate  DateTime  @default(now())
-  accountStatus     String
+  accountStatus     String    @default("inactive")
   email             String    @unique
   phoneNumber       String?
 
@@ -147,7 +147,7 @@ model Report {
 
 model Admin {
   id       Int    @id @default(autoincrement())
-  username String
-  password String
+  username String @default("default_admin_username")
+  password String @default("default_admin_username")
   email    String @unique
 }
