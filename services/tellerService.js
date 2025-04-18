@@ -277,7 +277,8 @@ exports.getSessionByTellerId = async (type, tellerId) => {
                   id: true,
                   packageId: true,
                   package: true,
-                  sessionId: true
+                  sessionId: true,
+                  status: true
                 }
               }
             }
