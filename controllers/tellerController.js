@@ -164,6 +164,62 @@ exports.getTellerPackageByTellerId = async (req, res, next) => {
   }
 };
 
+exports.patchTellerPackageByTellerId = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.tellerId, 10);
+
+    if (isNaN(tellerId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid Input Type',
+      });
+    }
+
+    const { packages } = req.body;
+
+    if (!Array.isArray(packages)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_BODY',
+        message: 'Expected an array of packages in request body',
+      });
+    }
+
+    // Split by status
+    const newPackages = packages.filter(pkg => pkg.status === 'New');
+    const deletedPackages = packages.filter(pkg => pkg.status === 'Deleted');
+
+    // Create new packages
+    const createdResults = await Promise.all(
+      newPackages.map(pkg =>
+        tellerService.createTellerPackage(tellerId, {
+          packageDetail: pkg.packageDetail,
+          questionNumber: pkg.questionNumber,
+          price: pkg.price,
+        })
+      )
+    );
+
+    // Mark deleted packages
+    const deletedResults = await Promise.all(
+      deletedPackages.map(pkg =>
+        tellerService.markTellerPackageDeleted(tellerId, pkg.id)
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Packages updated',
+      created: createdResults,
+      deleted: deletedResults,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 exports.getUpcomingSessionByTellerId = async (req, res, next) => {
   try {
     const tellerId = parseInt(req.params.tellerId, 10);

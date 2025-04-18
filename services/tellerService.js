@@ -194,6 +194,7 @@ exports.createTellerPackage = async (tellerId, packageData) => {
       packageDetail: packageDetail || null,
       questionNumber: questionNumber || null,
       price,
+      status: "Active"
     },
   });
 
@@ -231,6 +232,24 @@ exports.getTellerPackageByTellerId = async (tellerId) => {
   }
   return packages;
 }
+
+exports.markTellerPackageDeleted = async (tellerId, packageId) => {
+
+  // Validate that the package belongs to the teller
+  const existingPackage = await prisma.TellerPackage.findFirst({
+    where: { id: packageId, tellerId: tellerId },
+  });
+
+  if (!existingPackage) {
+    throw new AppError(404, 'PACKAGE_NOT_FOUND', 'Package not found or does not belong to the specified teller');
+  }
+
+  return prisma.tellerPackage.update({
+    where: { id: packageId },
+    data: { status: 'Deleted' },
+  });
+};
+
 
 exports.getSessionByTellerId = async (type, tellerId) => {
 

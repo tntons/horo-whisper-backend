@@ -15,6 +15,7 @@ router.patch('/end-session/:sessionId', tellerController.patchEndSession);
 router.post('/:tellerId/teller-package', tellerController.postTellerPackageByTellerId);
 router.delete('/:tellerId/teller-package', tellerController.deleteTellerPackageByTellerId);
 router.get('/:tellerId/teller-package', tellerController.getTellerPackageByTellerId);
+router.patch('/:tellerId/teller-package', tellerController.patchTellerPackageByTellerId);
 
 router.get('/:tellerId/upcoming-session', tellerController.getUpcomingSessionByTellerId);
 router.get('/:tellerId/past-session', tellerController.getPastSessionByTellerId);
