@@ -74,6 +74,7 @@ model TellerPackage {
   packageDetail String?
   questionNumber Int?
   price         Float
+  status        String  @default("Active")
 
   teller        Teller  @relation(fields: [tellerId], references: [id], onDelete: Cascade)
   payments      Payment[]
