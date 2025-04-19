@@ -255,7 +255,7 @@ exports.getSessionByTellerId = async (type, tellerId) => {
   }
 
   const sessionStatus = {
-    upcoming: ["Pending", "Processing"],
+    upcoming: ["Pending"],
     past: ["Ended", "Declined"],
     current: ["Active"]
   };
