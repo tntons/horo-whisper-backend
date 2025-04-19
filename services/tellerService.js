@@ -134,11 +134,8 @@ exports.getTellerById = async (id) => {
 
     // Format the response
     return {
-      tellerId: teller.id,
+      ...teller,
       tellerName: teller.user.username,
-      specialty: teller.specialty,
-      bio: teller.bio,
-      traffic: teller.traffic,
       totalNumberOfReviews,
       averageRating,
       packages: teller.packages, // All teller packages
