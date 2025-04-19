@@ -136,3 +136,24 @@ exports.getSessionsByCustomerId = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getPredictionByCustomerId = async (req, res, next) => {
+  try {
+    const customerId = parseInt(req.params.customerId, 10);
+
+    // Validate input
+    if (isNaN(customerId)) {
+      return res.status(400).json(invalidInputTypeMsg);
+    }
+
+    // Call the service to fetch prediction
+    const prediction = await customerService.getPredictionByCustomerId(customerId);
+
+    return res.status(200).json({
+      success: true,
+      data: prediction,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
