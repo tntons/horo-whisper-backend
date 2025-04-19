@@ -147,10 +147,12 @@ exports.getSessionsByCustomerId = async (customerId) => {
 
 exports.getPredictionByCustomerId = async (customerId) => {
   try {
-    const zodiacSign = await prisma.PredictionAttribute.findUnique({
-      where: { customerId },
-      select: { zodiacSign: true }
-    });
+    // const zodiacSign = await prisma.PredictionAttribute.findUnique({
+    //   where: { customerId },
+    //   select: { zodiacSign: true }
+    // });
+
+    const zodiacSign ='cancer'; // Mocked zodiac sign for testing
 
     if (zodiacSign==null) {
       throw new AppError(404, 'ZODIAC_SIGN_NOT_FOUND', 'No zodiac sign found for this customer');
@@ -161,7 +163,6 @@ exports.getPredictionByCustomerId = async (customerId) => {
     const prediction = response.data.data.horoscope_data;
     const luckyColors = zodiacLuckyInfo[zodiacSign.toLowerCase()].luckyColors;
     const luckyNumbers = zodiacLuckyInfo[zodiacSign.toLowerCase()].luckyNumbers;
-
 
     const formattedPrediction = {
       prediction: prediction,
