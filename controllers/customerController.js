@@ -44,6 +44,31 @@ exports.getCustomerById = async (req, res, next) => {
   }
 };
 
+exports.patchCustomerById = async (req, res, next) => {
+  try {
+    const customerId = parseInt(req.params.id, 10);
+
+    // Validate tellerId
+    if (isNaN(customerId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid Input Type',
+      });
+    }
+
+    const updateData = req.body;
+    const updatedCustomerId = await customerService.updateCustomerById(customerId, updateData);
+
+    return res.status(200).json({
+      success: true,
+      data: updatedCustomer,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.bookSession = async (req, res, next) => {
   try {
     const { customerId, tellerId, packageId } = req.body;
@@ -53,14 +78,14 @@ exports.bookSession = async (req, res, next) => {
       return res.status(400).json({
         status: 'error',
         code: 'INVALID_INPUT',
-        message: 'All fields (customerId, customerId, packageId, paymentAmount) are required.',
+        message: 'All fields (customerId, tellerId, packageId, paymentAmount) are required.',
       });
     }
 
     // Prepare session data
     const sessionData = {
       customerId,
-      customerId,
+      tellerId,
       sessionStatus: 'Pending', // Default status
       createdAt: new Date(),
     };

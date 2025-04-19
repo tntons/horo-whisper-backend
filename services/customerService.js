@@ -48,6 +48,29 @@ exports.getCustomerById = async (id) => {
   }
 };
 
+exports.updateCustomerById = async (customerId, updateData) => {
+  try {
+    const existingCustomer = await prisma.Customer.findUnique({
+      where: { id: customerId },
+    });
+
+    if (!existingCustomer) {
+      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    }
+
+    const updatedCustomer = await prisma.Customer.update({
+      where: { id: customerId },
+      data: updateData,
+    });
+
+    return updatedCustomer;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'UPDATE_TELLER_ERROR', 'Error updating teller');
+  }
+};
+
+
 exports.bookSession = async (sessionData, paymentData) => {
   return await prisma.$transaction(async (tx) => {
 

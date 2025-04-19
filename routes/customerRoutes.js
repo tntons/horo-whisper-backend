@@ -4,6 +4,7 @@ const customerController = require('../controllers/customerController.js');
 
 router.post('/', customerController.createCustomer);
 router.get('/:id', customerController.getCustomerById);
+router.patch('/:id', customerController.patchCustomerById);
 
 router.post('/book-session', customerController.bookSession);
 router.get('/get-payment/:paymentId', customerController.getPaymentByPaymentId);
