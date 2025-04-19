@@ -1,16 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const clientController = require('../controllers/customerController.js');
+const customerController = require('../controllers/customerController.js');
 
-router.post('/', clientController.createCustomer);
+router.post('/', customerController.createCustomer);
+router.get('/:id', customerController.getCustomerById);
 
-router.post('/book-session', clientController.bookSession);
-router.get('/get-payment/:paymentId', clientController.getPaymentByPaymentId);
-router.patch('/verify-payment/:paymentId', clientController.verifyPayment);
+router.post('/book-session', customerController.bookSession);
+router.get('/get-payment/:paymentId', customerController.getPaymentByPaymentId);
+router.patch('/verify-payment/:paymentId', customerController.verifyPayment);
 
-router.get('/sessions/:customerId', clientController.getSessionsByCustomerId);
+router.get('/sessions/:customerId', customerController.getSessionsByCustomerId);
 
-router.get('/daily-prediction/:customerId', clientController.getPredictionByCustomerId);
+router.get('/daily-prediction/:customerId', customerController.getPredictionByCustomerId);
 
 
 module.exports = router;

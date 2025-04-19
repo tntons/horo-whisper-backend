@@ -27,6 +27,27 @@ exports.createCustomer = async ({ userId, profilePic }) => {
   }
 };
 
+exports.getCustomerById = async (id) => {
+  try {
+    const customer = await prisma.Customer.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        prediction: true,
+      },
+    });
+
+    if (!customer) {
+      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    }
+
+    return customer;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'FETCH_CUSTOMER_ERROR', 'Error fetching customer details');
+  }
+};
+
 exports.bookSession = async (sessionData, paymentData) => {
   return await prisma.$transaction(async (tx) => {
 

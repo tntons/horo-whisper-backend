@@ -31,6 +31,19 @@ exports.createCustomer = async (req, res, next) => {
   }
 };
 
+exports.getCustomerById = async (req, res, next) => {
+  try {
+    const customerId = parseInt(req.params.id, 10);
+    const customer = await customerService.getCustomerById(customerId);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    res.json(customer);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.bookSession = async (req, res, next) => {
   try {
     const { customerId, tellerId, packageId } = req.body;
@@ -40,14 +53,14 @@ exports.bookSession = async (req, res, next) => {
       return res.status(400).json({
         status: 'error',
         code: 'INVALID_INPUT',
-        message: 'All fields (customerId, tellerId, packageId, paymentAmount) are required.',
+        message: 'All fields (customerId, customerId, packageId, paymentAmount) are required.',
       });
     }
 
     // Prepare session data
     const sessionData = {
       customerId,
-      tellerId,
+      customerId,
       sessionStatus: 'Pending', // Default status
       createdAt: new Date(),
     };
