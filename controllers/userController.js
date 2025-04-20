@@ -13,10 +13,9 @@ exports.getAllUsers = async (req, res, next) => {
 // POST /users
 exports.createUser = async (req, res, next) => {
   try {
-    const userData = req.body; // Expecting JSON: { name, email }
-    const newUser = await userService.createUser(userData);
-    res.status(200).json(newUser);
+    const user = await userService.createUser(req.body)
+    return res.status(201).json({ success: true, data: user })
   } catch (err) {
-    next(err);
+    next(err)
   }
 };

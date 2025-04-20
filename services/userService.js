@@ -8,5 +8,25 @@ exports.getAllUsers = async () => {
 
 // Create a new user
 exports.createUser = async (data) => {
-  return await prisma.user.create({ data });
+  try {
+    const user = await prisma.user.create({
+      data: {
+        username: data.username,
+        password: data.password,
+        email: data.email,
+        firstName: data.firstName || null,
+        lastName: data.lastName || null,
+        phoneNumber: data.phoneNumber || null,
+        birthDate: data.birthDate || null
+      }
+    })
+
+    await prisma.customer.create({
+      data: { userId: user.id }
+    })
+
+    return user
+  } catch (e) {
+    throw new AppError(500, 'CREATE_USER_ERROR', e.message)
+  }
 };

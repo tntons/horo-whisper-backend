@@ -185,7 +185,13 @@ exports.getSessionsByCustomerId = async (customerId) => {
 
     return sessions;
   } catch (error) {
-    throw new AppError(500, 'FETCH_SESSIONS_ERROR', 'Error fetching sessions for the customer');
+    console.error('FETCH_SESSIONS_ERROR:', error);
+
+    throw new AppError(
+      500,
+      'FETCH_SESSIONS_ERROR',
+      error.message || 'Error fetching sessions for the customer'
+    );
   }
 };
 
