@@ -1,11 +1,14 @@
 require('dotenv').config()              
 const express = require('express')
 const cors = require('cors')
+const { Server } = require('socket.io')
+const http = require('http')
 const jwt = require('jsonwebtoken')
 const { OAuth2Client } = require('google-auth-library')
 const { PrismaClient } = require('@prisma/client')
 const { errorHandler } = require('./middleware/errorHandler')
 const userController = require('./controllers/userController')
+const chatService = require('./services/chatService')
 
 const app = express()
 const prisma = new PrismaClient()
@@ -106,7 +109,53 @@ app.use('/chats',    requireAuth, chatRoutes)
 
 app.use(errorHandler)
 
+const server = http.createServer(app)
+
+const io = new Server(server, {
+  cors: { origin: '*' }
+})
+
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth.token
+    if (!token) throw new Error('Missing token')
+    socket.user = jwt.verify(token, process.env.JWT_SECRET)
+    next()
+  } catch (err) {
+    next(new Error('Unauthorized'))
+  }
+})
+
+io.on('connection', socket => {
+  const userId = socket.user.userId
+
+  socket.on('join', (sessionId) => {
+    socket.join(`session:${sessionId}`)
+  })
+
+  socket.on('sendMessage', async ({ sessionId, content }) => {
+    try {
+
+      const chat = await chatService.createChat({
+        sessionId,
+        senderId: userId,
+        content
+      })
+
+      io.to(`session:${sessionId}`).emit('newMessage', {
+        id: chat.id,
+        content:   chat.content,
+        createdAt: chat.createdAt.toISOString(),
+        senderId:  chat.senderId
+      })
+    } catch (err) {
+      socket.emit('error', { message: err.message })
+    }
+  })
+})
+
+
 const port = process.env.PORT || 8000
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`)
 })
