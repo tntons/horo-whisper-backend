@@ -48,25 +48,67 @@ exports.getCustomerById = async (id) => {
   }
 };
 
-exports.updateCustomerById = async (customerId, updateData) => {
+exports.getCustomerByUserId = async (userId) => {
   try {
-    const existingCustomer = await prisma.Customer.findUnique({
-      where: { id: customerId },
-    });
+    const customer = await prisma.customer.findUnique({
+      where: { userId },
+      include: {
+        user: true,
+        prediction: true,
+        sessions: true,
+        payments: true,
+        reports: true
+      }
+    })
+    console.log('customer:', customer)
+    if (!customer) {
+      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer profile not found')
+    }
+    return customer
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    throw new AppError(500, 'FETCH_CUSTOMER_ERROR', err.message)
+  }
+}
 
-    if (!existingCustomer) {
-      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+exports.updateCustomerByUserId = async (userId, updateData) => {
+  try {
+
+    const { profilePic, birthDate: bd, birthTime: bt, ...userFields } = updateData
+
+    // build a proper ISO timestamp for birthDate
+    if (bd) {
+      // if consumer passed an array [date, time]
+        const [datePart, timePart] =
+        Array.isArray(bd) && bd.length === 2 ? bd : [bd, bt || '00:00']
+
+
+        const hhmmss = timePart.includes(':') ? `${timePart}:00` : `${timePart}`
+
+        const isoWithOffset = `${datePart}T${hhmmss}+07:00`
+        userFields.birthDate = new Date(isoWithOffset)
     }
 
-    const updatedCustomer = await prisma.Customer.update({
-      where: { id: customerId },
-      data: updateData,
-    });
 
-    return updatedCustomer;
+    const [updatedUser, updatedCustomer] = await prisma.$transaction([
+      // update User table
+      prisma.user.update({
+        where: { id: userId },
+        data: userFields
+      }),
+
+      // update Customer table
+      prisma.customer.update({
+        where: { userId },
+        data: { profilePic }
+      })
+    ])
+
+    return { ...updatedUser, customer: updatedCustomer }
   } catch (error) {
+    console.error('UPDATE_CUSTOMER_ERROR:', error.message)
     if (error instanceof AppError) throw error;
-    throw new AppError(500, 'UPDATE_TELLER_ERROR', 'Error updating teller');
+    throw new AppError(500, 'UPDATE_CUSTOMER_ERROR', 'Error updating customer' + error.message);
   }
 };
 
@@ -172,14 +214,14 @@ exports.getSessionsByCustomerId = async (customerId) => {
           select: {
             user: {
               select: {
-                username: true, // Include teller's username
+                username: true, 
               },
             },
           },
         },
-        reviews: true, // Include reviews for the session
+        reviews: true,
         chats: true,
-        payment: true, // Include payment details
+        payment: true,
       },
     });
 
@@ -195,7 +237,44 @@ exports.getSessionsByCustomerId = async (customerId) => {
   }
 };
 
-exports.getPredictionByCustomerId = async (customerId) => {
+exports.getSessionsByCustomerId = async (userId) => {
+  try {
+
+    const customer = await prisma.customer.findUnique({
+      where: { userId }
+    })
+    if (!customer) {
+      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer profile not found')
+    }
+    const sessions = await prisma.session.findMany({
+      where: { customerId: customer.id },
+      include: {
+        teller: {
+          select: {
+            user: {
+              select: { username: true }
+            }
+          }
+        },
+        reviews: true,
+        chats: true,
+        payment: true
+      }
+    })
+
+    return sessions
+  } catch (error) {
+    console.error('FETCH_SESSIONS_ERROR:', error)
+    if (error instanceof AppError) throw error
+    throw new AppError(
+      500,
+      'FETCH_SESSIONS_ERROR',
+      error.message || 'Error fetching sessions for the customer'
+    )
+  }
+}
+
+exports.getPredictionByCustomerId = async (userId) => {
   try {
     // const zodiacSign = await prisma.PredictionAttribute.findUnique({
     //   where: { customerId },
