@@ -147,29 +147,91 @@ exports.getTellerById = async (id) => {
   }
 };
 
-exports.updateTellerById = async (tellerId, updateData) => {
+exports.getTellerByUserId = async (userId) => {
   try {
-    // Validate that the teller exists
-    const existingTeller = await prisma.Teller.findUnique({
-      where: { id: tellerId },
+    const teller = await prisma.Teller.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            username: true, // Fetch the teller's name
+          },
+        },
+        packages: true, // Fetch all teller packages
+        sessions: {
+          select: {
+            reviews: {
+              include: {
+                session: {
+                  select: {
+                    customer: {
+                      select: {
+                        user: {
+                          select: {
+                            username: true, // Fetch the customer's username
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
-    if (!existingTeller) {
+    if (!teller) {
       throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
     }
 
-    // Update the teller
-    const updatedTeller = await prisma.Teller.update({
-      where: { id: tellerId },
-      data: updateData,
-    });
+    // Extract all reviews from sessions and include customerName
+    const allReviews = teller.sessions.flatMap((session) =>
+      session.reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        reviewAt: review.reviewAt,
+        customerName: review.customer?.user?.username || 'Anonymous', // Include customerName
+      }))
+    );
 
-    return updatedTeller;
+    // Calculate the total number of reviews and average rating
+    const totalNumberOfReviews = allReviews.length;
+    const averageRating =
+      totalNumberOfReviews > 0
+        ? allReviews.reduce((sum, review) => sum + review.rating, 0) / totalNumberOfReviews
+        : 0;
+
+    // Format the response
+    return {
+      ...teller,
+      tellerName: teller.user.username,
+      totalNumberOfReviews,
+      averageRating,
+      packages: teller.packages, // All teller packages
+      reviews: allReviews, // All reviews with customerName
+    };
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError(500, 'UPDATE_TELLER_ERROR', 'Error updating teller');
+    throw new AppError(500, 'FETCH_TELLER_ERROR', 'Error fetching teller details');
   }
 };
+
+exports.updateTellerByUserId = async (userId, updateData) => {
+  try {
+    const updatedTeller = await prisma.teller.update({
+      where: { userId },
+      data: updateData
+    })
+
+    return updatedTeller
+  } catch (error) {
+    if (error instanceof AppError) throw error
+    throw new AppError(500, 'UPDATE_TELLER_ERROR', error.message || 'Error updating teller')
+  }
+}
 
 // Create a new teller
 exports.createTeller = async (data) => {
@@ -228,6 +290,40 @@ exports.getTellerPackageByTellerId = async (tellerId) => {
     throw new AppError(404, 'NO_PACKAGES_FOUND', 'No packages found for this teller');
   }
   return packages;
+}
+
+exports.patchTellerPackageByUserId = async (userId, updateData) => {
+  try {
+    const { packageId, ...fields } = updateData
+    if (!packageId) {
+      throw new AppError(400, 'INVALID_INPUT', 'packageId is required')
+    }
+
+    // ensure teller exists
+    const teller = await prisma.teller.findUnique({ where: { userId } })
+    if (!teller) {
+      throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found')
+    }
+
+    // ensure package belongs to this teller
+    const existing = await prisma.TellerPackage.findFirst({
+      where: { id: packageId, tellerId: teller.id }
+    })
+    if (!existing) {
+      throw new AppError(404, 'PACKAGE_NOT_FOUND', 'Package not found for this teller')
+    }
+
+    // perform update
+    const updated = await prisma.TellerPackage.update({
+      where: { id: packageId },
+      data: fields
+    })
+    return updated
+
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    throw new AppError(500, 'UPDATE_PACKAGE_ERROR', err.message || 'Error updating teller package')
+  }
 }
 
 exports.markTellerPackageDeleted = async (tellerId, packageId) => {

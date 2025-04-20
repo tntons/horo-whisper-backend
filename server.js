@@ -97,10 +97,12 @@ app.post('/auth/select-role', requireAuth, async (req, res, next) => {
 const userRoutes = require('./routes/userRoutes')
 const tellerRoutes = require('./routes/tellerRoutes')
 const customerRoutes = require('./routes/customerRoutes')
+const chatRoutes = require('./routes/chatRoutes')
 
 app.use('/users',    requireAuth, userRoutes)
 app.use('/tellers',  requireAuth, tellerRoutes)
 app.use('/customers',requireAuth, customerRoutes)
+app.use('/chats',    requireAuth, chatRoutes)
 
 app.use(errorHandler)
 

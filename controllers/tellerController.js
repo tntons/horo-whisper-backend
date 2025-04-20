@@ -29,6 +29,19 @@ exports.getAllBrowseTellers = async (req, res, next) => {
   }
 };
 
+exports.getTellerByUserId = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const teller = await tellerService.getTellerByUserId(userId);
+    if (!teller) {
+      return res.status(404).json({ message: 'Teller not found' });
+    }
+    res.json(teller);
+  } catch (err) {
+    next(err);
+  }
+}
+
 // GET /tellers/:id
 exports.getTellerById = async (req, res, next) => {
   try {
@@ -60,6 +73,23 @@ exports.patchTellerById = async (req, res, next) => {
 
     // Call the service to update the teller
     const updatedTeller = await tellerService.updateTellerById(tellerId, updateData);
+
+    return res.status(200).json({
+      success: true,
+      data: updatedTeller,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.patchTellerByUserId = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const updateData = req.body; // Expecting JSON with fields to update
+
+    // Call the service to update the teller
+    const updatedTeller = await tellerService.updateTellerByUserId(userId, updateData);
 
     return res.status(200).json({
       success: true,
@@ -107,6 +137,30 @@ exports.postTellerPackageByTellerId = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.patchTellerPackageByUserId = async (req, res, next) => {
+  try {
+    const userId = req.user.userId
+    const updateData = req.body
+
+    if (!updateData || typeof updateData !== 'object') {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_INPUT',
+        message: 'Request body must be an object with fields to update'
+      })
+    }
+
+    const updated = await tellerService.patchTellerPackageByUserId(userId, updateData)
+
+    return res.status(200).json({
+      success: true,
+      data: updated
+    })
+  } catch (err) {
+    next(err)
+  }
+}
 
 exports.deleteTellerPackageByTellerId = async (req, res, next) => {
   try {
@@ -273,7 +327,7 @@ exports.getCurrentSessionByTellerId = async (req, res, next) => {
 
     const result = await tellerService.getSessionByTellerId("current",tellerId);
 
-    return res.status(200).json({
+    return res.status(200).json({ 
       success:true,
       data: result
     });
