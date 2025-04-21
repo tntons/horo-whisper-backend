@@ -399,7 +399,7 @@ exports.patchEndSession = async (req, res, next) => {
   }
 }
 
-exports.postReview = async (req, res, next) => {
+exports.createReview = async (req, res, next) => {
   try {
     const { sessionId, rating, comment } = req.body;
 
@@ -441,6 +441,27 @@ exports.postReview = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getReviewByTellerId = async (req, res, next) => {
+  try {
+    const tellerId = parseInt(req.params.tellerId, 10);
+
+    // check if tellerId is a number
+    if (isNaN(tellerId)) {
+      return res.status(400).json(invalidInputTypeMsg);
+    }
+
+    const result = await tellerService.getReviewByTellerId(tellerId);
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+
+  } catch (err) {
+    next(err);
+  }
+}
 
 exports.getSessionDataBySessionId = async (req, res, next) => {
   try {

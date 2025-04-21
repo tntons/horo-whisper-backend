@@ -24,6 +24,7 @@ router.get('/:tellerId/upcoming-session', tellerController.getUpcomingSessionByT
 router.get('/:tellerId/past-session', tellerController.getPastSessionByTellerId);
 router.get('/:tellerId/current-session', tellerController.getCurrentSessionByTellerId);
 
-router.post('/reviews', tellerController.postReview);
+router.post('/create-review', tellerController.createReview);
+router.get('/get-review/:tellerId', tellerController.getReviewByTellerId);
 
 module.exports = router;
