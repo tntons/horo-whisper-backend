@@ -175,6 +175,7 @@ exports.getTellerById = async (id) => {
       packages: teller.packages, // All teller packages
       reviews: allReviews, // All reviews with customerName
       traffic: totalActiveSessions*5,
+      numberOfEndedSessions: EndedSessions.length,
       totalAmountFromEndedSessions,
     };
   } catch (error) {
