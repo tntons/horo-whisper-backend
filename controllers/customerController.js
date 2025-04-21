@@ -92,6 +92,7 @@ exports.patchCustomerById = async (req, res, next) => {
 
 exports.bookSession = async (req, res, next) => {
   try {
+
     const { customerId, tellerId, packageId } = req.body;
 
     // Validate input
@@ -118,9 +119,12 @@ exports.bookSession = async (req, res, next) => {
       status: 'Disabled', // Default status
       createdAt: new Date(),
     };
+    console.log(sessionData);
+    console.log(paymentData);
 
     // Call the service to book the session
     const result = await customerService.bookSession(sessionData, paymentData);
+    console.log(result);
 
     return res.status(201).json({
       success: true,
@@ -185,9 +189,9 @@ exports.getSessionsByCustomerId = async (req, res, next) => {
 
 exports.getPredictionByCustomerId = async (req, res, next) => {
   try {
-    const prediction = await customerService.getPredictionByCustomerId(
-      req.user.userId
-    );
+    const customerId = parseInt(req.params.customerId, 10);
+    console.log(customerId);
+    const prediction = await customerService.getPredictionByCustomerId(customerId);
     return res.status(200).json({ success: true, data: prediction });
   } catch (err) {
     console.error('FETCH_PREDICTION_ERROR:', err);
