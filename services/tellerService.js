@@ -24,6 +24,7 @@ exports.getAllTellers = async () => {
                 rating: true, // Fetch ratings to calculate the average rating
               },
             },
+            sessionStatus: true,
           },
         },
       },
@@ -46,6 +47,12 @@ exports.getAllTellers = async () => {
         ? Math.min(...teller.packages.map((pkg) => pkg.price))
         : null;
 
+      // Calculate traffic by counting active sessions
+      const activeSessions = teller.sessions.filter(
+        (session) => session.sessionStatus === 'Active'
+      );
+      const totalActiveSessions = activeSessions.length;
+
       return {
         tellerId: teller.id,
         tellerName: teller.user.username,
@@ -54,7 +61,7 @@ exports.getAllTellers = async () => {
         minPrice,
         specialty: teller.specialty,
         bio: teller.bio,
-        traffic: teller.traffic,
+        traffic: totalActiveSessions * 5,
       };
     });
 
@@ -105,6 +112,16 @@ exports.getTellerById = async (id) => {
                 },
               },
             },
+            sessionStatus: true,
+            payment: {
+              include: {
+                package: {
+                  select: {
+                    price: true, // Fetch package prices to calculate the total amount made
+                  }
+                },
+              },
+            }
           },
         },
       },
@@ -132,6 +149,23 @@ exports.getTellerById = async (id) => {
         ? allReviews.reduce((sum, review) => sum + review.rating, 0) / totalNumberOfReviews
         : 0;
 
+    // Calculate traffic by counting active sessions
+    const activeSessions = teller.sessions.filter(
+      (session) => session.sessionStatus === 'Active'
+    );
+    const totalActiveSessions = activeSessions.length;
+
+    const EndedSessions = teller.sessions.filter(
+      (session) => session.sessionStatus === 'Ended'
+    );
+    const totalAmountFromEndedSessions = EndedSessions.reduce((total, session) => {
+      const payment = session.payment;
+      if (payment && payment.package) {
+        return total + payment.package.price;
+      }
+      return total;
+    }, 0);
+
     // Format the response
     return {
       ...teller,
@@ -140,6 +174,8 @@ exports.getTellerById = async (id) => {
       averageRating,
       packages: teller.packages, // All teller packages
       reviews: allReviews, // All reviews with customerName
+      traffic: totalActiveSessions*5,
+      totalAmountFromEndedSessions,
     };
   } catch (error) {
     if (error instanceof AppError) throw error;
