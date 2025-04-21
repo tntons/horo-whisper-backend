@@ -613,3 +613,19 @@ exports.createReview = async ({ sessionId, rating, comment }) => {
     throw new AppError(500, 'CREATE_REVIEW_ERROR', 'Error creating review');
   }
 };
+
+exports.getSessionById = async (sessionId) => {
+  try {
+    const session = await prisma.Session.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
+    }
+
+    return session;
+  } catch (error) {
+    throw new AppError(500, 'FETCH_SESSION_ERROR', 'Error fetching session');
+  }
+}

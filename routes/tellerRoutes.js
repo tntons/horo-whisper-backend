@@ -11,6 +11,7 @@ router.post('/', tellerController.createTeller);
 router.patch('/accept-session/:sessionId', tellerController.patchAcceptSession);
 router.patch('/decline-session/:sessionId', tellerController.patchDeclineSession);
 router.patch('/end-session/:sessionId', tellerController.patchEndSession);
+router.get('/sessionData/:sessionId', tellerController.getSessionDataBySessionId);
 
 router.post('/:tellerId/teller-package', tellerController.postTellerPackageByTellerId);
 router.delete('/:tellerId/teller-package', tellerController.deleteTellerPackageByTellerId);

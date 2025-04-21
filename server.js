@@ -49,7 +49,7 @@ app.post('/auth/google', async (req, res) => {
 app.get('/mock/user', async (req, res) => {
   try {
 
-    const user_id =  1;
+    const user_id =  15;
 
     const token = jwt.sign(
       { userId: user_id },
