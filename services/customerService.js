@@ -274,7 +274,7 @@ exports.getSessionsByCustomerId = async (userId) => {
   }
 }
 
-exports.getPredictionByCustomerId = async (userId) => {
+exports.getPredictionByCustomerId = async (customerId) => {
   try {
     // const zodiacSign = await prisma.PredictionAttribute.findUnique({
     //   where: { customerId },

@@ -15,7 +15,7 @@ router.patch('/verify-payment/:paymentId', customerController.verifyPayment);
 
 router.get('/sessions', customerController.getSessionsByCustomerId);
 
-router.get('/daily-prediction', customerController.getPredictionByCustomerId);
+router.get('/daily-prediction/:customerId', customerController.getPredictionByCustomerId);
 
 
 module.exports = router;
