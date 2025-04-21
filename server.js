@@ -1,11 +1,14 @@
 require('dotenv').config()              
 const express = require('express')
 const cors = require('cors')
+const { Server } = require('socket.io')
+const http = require('http')
 const jwt = require('jsonwebtoken')
 const { OAuth2Client } = require('google-auth-library')
 const { PrismaClient } = require('@prisma/client')
 const { errorHandler } = require('./middleware/errorHandler')
 const userController = require('./controllers/userController')
+const chatService = require('./services/chatService')
 
 const app = express()
 const prisma = new PrismaClient()
@@ -43,6 +46,23 @@ app.post('/auth/google', async (req, res) => {
   }
 })
 
+app.get('/mock/user', async (req, res) => {
+  try {
+
+    const user_id =  1;
+
+    const token = jwt.sign(
+      { userId: user_id },
+      process.env.JWT_SECRET,
+      { expiresIn: '2h' }
+    )
+    res.json({ token })
+  } catch (err) {
+    console.error(err)
+    res.status(401).send('Invalid Google ID token'+err)
+  }
+})
+
 function requireAuth(req, res, next) {
   const auth = req.headers.authorization || ''
   const [_, token] = auth.split(' ')
@@ -63,6 +83,30 @@ app.get('/me', requireAuth, async (req, res) => {
     where: { id: req.user.userId },
   })
   res.json(user)
+})
+
+app.get('/me/customer', requireAuth, async (req, res) => {
+  const customer = await prisma.Customer.findUnique({
+      where: { userId: req.user.userId },
+      include: {
+        user: true,
+        prediction: true,
+      },
+    });
+
+  res.json(customer)
+})
+
+app.get('/me/teller', requireAuth, async (req, res) => {
+  const teller = await prisma.Teller.findUnique({
+      where: { userId: req.user.userId },
+      include: {
+        user: true,
+      },
+    });
+  console.log('teller:', teller)
+
+  res.json(teller)
 })
 
 app.post('/auth/select-role', requireAuth, async (req, res, next) => {
@@ -97,14 +141,62 @@ app.post('/auth/select-role', requireAuth, async (req, res, next) => {
 const userRoutes = require('./routes/userRoutes')
 const tellerRoutes = require('./routes/tellerRoutes')
 const customerRoutes = require('./routes/customerRoutes')
+const chatRoutes = require('./routes/chatRoutes')
 
 app.use('/users',    requireAuth, userRoutes)
 app.use('/tellers',  requireAuth, tellerRoutes)
 app.use('/customers',requireAuth, customerRoutes)
+app.use('/chats',    requireAuth, chatRoutes)
 
 app.use(errorHandler)
 
+const server = http.createServer(app)
+
+const io = new Server(server, {
+  cors: { origin: '*' }
+})
+
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth.token
+    if (!token) throw new Error('Missing token')
+    socket.user = jwt.verify(token, process.env.JWT_SECRET)
+    next()
+  } catch (err) {
+    next(new Error('Unauthorized'))
+  }
+})
+
+io.on('connection', socket => {
+  const userId = socket.user.userId
+
+  socket.on('join', (sessionId) => {
+    socket.join(`session:${sessionId}`)
+  })
+
+  socket.on('sendMessage', async ({ sessionId, content }) => {
+    try {
+
+      const chat = await chatService.createChat({
+        sessionId,
+        senderId: userId,
+        content
+      })
+
+      io.to(`session:${sessionId}`).emit('newMessage', {
+        id: chat.id,
+        content:   chat.content,
+        createdAt: chat.createdAt.toISOString(),
+        senderId:  chat.senderId
+      })
+    } catch (err) {
+      socket.emit('error', { message: err.message })
+    }
+  })
+})
+
+
 const port = process.env.PORT || 8000
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`)
 })

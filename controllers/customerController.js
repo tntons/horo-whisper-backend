@@ -44,6 +44,27 @@ exports.getCustomerById = async (req, res, next) => {
   }
 };
 
+exports.getProfile = async (req, res, next) => {
+  try {
+    const profile = await customerService.getCustomerByUserId(req.user.userId)
+    res.json({ success: true, data: profile })
+  } catch (err) {
+    next(err)
+  }
+}
+
+exports.patchProfile = async (req, res, next) => {
+  try {
+    const updated = await customerService.updateCustomerByUserId(
+      req.user.userId,
+      req.body
+    )
+    res.json({ success: true, data: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
 exports.patchCustomerById = async (req, res, next) => {
   try {
     const customerId = parseInt(req.params.id, 10);
@@ -152,46 +173,24 @@ exports.verifyPayment = async (req, res, next) => {
 
 exports.getSessionsByCustomerId = async (req, res, next) => {
   try {
-    const customerId = parseInt(req.params.customerId, 10);
-
-    // Validate input
-    if (isNaN(customerId)) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'INVALID_ID',
-        message: 'Invalid customerId',
-      });
-    }
-
-    // Call the service to fetch sessions
-    const sessions = await customerService.getSessionsByCustomerId(customerId);
-
-    return res.status(200).json({
-      success: true,
-      data: sessions,
-    });
+    const sessions = await customerService.getSessionsByCustomerId(
+      req.user.userId
+    );
+    return res.status(200).json({ success: true, data: sessions });
   } catch (err) {
+    console.error('FETCH_SESSIONS_ERROR:', err);
     next(err);
   }
 };
 
 exports.getPredictionByCustomerId = async (req, res, next) => {
   try {
-    const customerId = parseInt(req.params.customerId, 10);
-
-    // Validate input
-    if (isNaN(customerId)) {
-      return res.status(400).json(invalidInputTypeMsg);
-    }
-
-    // Call the service to fetch prediction
-    const prediction = await customerService.getPredictionByCustomerId(customerId);
-
-    return res.status(200).json({
-      success: true,
-      data: prediction,
-    });
+    const prediction = await customerService.getPredictionByCustomerId(
+      req.user.userId
+    );
+    return res.status(200).json({ success: true, data: prediction });
   } catch (err) {
+    console.error('FETCH_PREDICTION_ERROR:', err);
     next(err);
   }
 }

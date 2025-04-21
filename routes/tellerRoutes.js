@@ -5,7 +5,7 @@ const tellerController = require('../controllers/tellerController.js');
 router.get('/', tellerController.getAllTellers);
 router.get('/browse', tellerController.getAllBrowseTellers);
 router.get('/:id', tellerController.getTellerById);
-router.patch('/:id', tellerController.patchTellerById);
+router.patch('/patch/:id', tellerController.patchTellerById);
 router.post('/', tellerController.createTeller);
 
 router.patch('/accept-session/:sessionId', tellerController.patchAcceptSession);
@@ -16,6 +16,8 @@ router.post('/:tellerId/teller-package', tellerController.postTellerPackageByTel
 router.delete('/:tellerId/teller-package', tellerController.deleteTellerPackageByTellerId);
 router.get('/:tellerId/teller-package', tellerController.getTellerPackageByTellerId);
 router.patch('/:tellerId/teller-package', tellerController.patchTellerPackageByTellerId);
+
+router.patch('/teller-package', tellerController.patchTellerPackageByUserId);
 
 router.get('/:tellerId/upcoming-session', tellerController.getUpcomingSessionByTellerId);
 router.get('/:tellerId/past-session', tellerController.getPastSessionByTellerId);
