@@ -193,6 +193,12 @@ io.on('connection', socket => {
       socket.emit('error', { message: err.message })
     }
   })
+
+  socket.on('endSession', ({ sessionId }) => {
+
+    console.log(`Ending session:${sessionId}`); // Add this log
+    io.to(`session:${sessionId}`).emit('sessionEnded')
+  })
 })
 
 

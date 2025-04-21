@@ -614,7 +614,7 @@ exports.createReview = async ({ sessionId, rating, comment }) => {
   }
 };
 
-exports.getSessionById = async (sessionId) => {
+exports.getSessionDataBySessionId = async (sessionId) => {
   try {
     const session = await prisma.Session.findUnique({
       where: { id: sessionId },
