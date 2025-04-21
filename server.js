@@ -30,7 +30,7 @@ app.post('/auth/google', async (req, res) => {
     // upsert user
     const user = await prisma.user.upsert({
       where: { email },
-      create: { email, firstName: given_name, lastName: family_name },
+      create: { email, firstName: given_name, lastName: family_name, username: given_name+family_name.slice(0,2) },
       update: {},
     })
 
