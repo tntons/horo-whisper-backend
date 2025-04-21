@@ -85,6 +85,30 @@ app.get('/me', requireAuth, async (req, res) => {
   res.json(user)
 })
 
+app.get('/me/customer', requireAuth, async (req, res) => {
+  const customer = await prisma.Customer.findUnique({
+      where: { userId: req.user.userId },
+      include: {
+        user: true,
+        prediction: true,
+      },
+    });
+
+  res.json(customer)
+})
+
+app.get('/me/teller', requireAuth, async (req, res) => {
+  const teller = await prisma.Teller.findUnique({
+      where: { userId: req.user.userId },
+      include: {
+        user: true,
+      },
+    });
+  console.log('teller:', teller)
+
+  res.json(teller)
+})
+
 app.post('/auth/select-role', requireAuth, async (req, res, next) => {
   const { role } = req.body
   const userId = req.user.userId
