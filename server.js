@@ -46,6 +46,23 @@ app.post('/auth/google', async (req, res) => {
   }
 })
 
+app.get('/mock/user', async (req, res) => {
+  try {
+
+    const user_id =  1;
+
+    const token = jwt.sign(
+      { userId: user_id },
+      process.env.JWT_SECRET,
+      { expiresIn: '2h' }
+    )
+    res.json({ token })
+  } catch (err) {
+    console.error(err)
+    res.status(401).send('Invalid Google ID token'+err)
+  }
+})
+
 function requireAuth(req, res, next) {
   const auth = req.headers.authorization || ''
   const [_, token] = auth.split(' ')
