@@ -623,6 +623,9 @@ exports.getReviewByTellerId = async (tellerId) => {
           tellerId: tellerId, // Replace with the actual tellerId
         },
       },
+      orderBy: {
+        reviewAt: 'desc'  // Add this to sort by date descending
+      },
       include: {
         session: {
           select: {
