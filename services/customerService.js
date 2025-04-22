@@ -354,7 +354,12 @@ exports.getSessionsByCustomerId = async (userId) => {
       include: {
         teller: {
           select: {
-            user: { select: { username: true } }
+            user: { 
+              select: { 
+                username: true 
+              }
+            },
+            profilePic: true  // Add this line to include profilePic
           }
         },
         reviews: true,
@@ -363,23 +368,23 @@ exports.getSessionsByCustomerId = async (userId) => {
           orderBy: { createdAt: 'desc' },
           take: 1,
           select: {
-            id:        true,
-            content:   true,
+            id: true,
+            content: true,
             createdAt: true,
-            senderId:  true
+            senderId: true
           }
         }
       }
     })
 
-    // compute unread counts in one go
+    // Rest of the code remains the same...
     const sessionIds = sessions.map(s => s.id)
     const unreadGroups = await prisma.chat.groupBy({
       by: ['sessionId'],
       where: {
         sessionId: { in: sessionIds },
-        isRead:    false,
-        senderId:  { not: userId }
+        isRead: false,
+        senderId: { not: userId }
       },
       _count: { _all: true }
     })
@@ -390,16 +395,16 @@ exports.getSessionsByCustomerId = async (userId) => {
 
     return sessions.map(session => {
       const lastChat = session.chats[0] && {
-        id:        session.chats[0].id,
-        content:   session.chats[0].content,
+        id: session.chats[0].id,
+        content: session.chats[0].content,
         timestamp: session.chats[0].createdAt.toISOString(),
-        senderId:  session.chats[0].senderId
+        senderId: session.chats[0].senderId
       }
       return {
         ...session,
         lastChat,
         unreadCount: unreadMap[session.id] || 0,
-        chats:       undefined
+        chats: undefined
       }
     })
   } catch (error) {
