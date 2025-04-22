@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client')
 const { AppError } = require('../middleware/errorHandler')
 const prisma = new PrismaClient()
 
-exports.createChat = async ({ sessionId, senderId, content }) => {
+exports.createChat = async ({ sessionId, senderId, content, isRead = false }) => {
   try {
 
     const session = await prisma.session.findUnique({ where: { id: sessionId } })
@@ -16,7 +16,7 @@ exports.createChat = async ({ sessionId, senderId, content }) => {
     }
 
     return await prisma.chat.create({
-      data: { sessionId, senderId, content }
+      data: { sessionId, senderId, content, isRead }
     })
   } catch (err) {
     if (err instanceof AppError) throw err

@@ -170,24 +170,42 @@ io.use((socket, next) => {
 io.on('connection', socket => {
   const userId = socket.user.userId
 
-  socket.on('join', (sessionId) => {
+  socket.on('join', async (sessionId) => {
     socket.join(`session:${sessionId}`)
+
+    await prisma.chat.updateMany({
+      where: {
+        sessionId,
+        isRead: false,
+        senderId: { not: userId }
+      },
+      data: { isRead: true }
+    })
+  })
+
+  socket.on('joinUpdates', () => {
+    socket.join('sessionUpdates')
   })
 
   socket.on('sendMessage', async ({ sessionId, content }) => {
     try {
+      const room = `session:${sessionId}`
+      const clients = io.sockets.adapter.rooms.get(room) || new Set()
+      const isRead = clients.size > 1
 
       const chat = await chatService.createChat({
         sessionId,
         senderId: userId,
-        content
+        content,
+        isRead
       })
 
       io.to(`session:${sessionId}`).emit('newMessage', {
         id: chat.id,
         content:   chat.content,
         createdAt: chat.createdAt.toISOString(),
-        senderId:  chat.senderId
+        senderId:  chat.senderId,
+        isRead:    chat.isRead
       })
     } catch (err) {
       socket.emit('error', { message: err.message })
