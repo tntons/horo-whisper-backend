@@ -44,6 +44,32 @@ exports.getCustomerById = async (req, res, next) => {
   }
 };
 
+exports.createPredictionAttribute = async (req, res, next) => {
+  try {
+    const customerId = parseInt(req.params.cusId, 10);
+    const createdAttribute = req.body;
+    
+    if (!customerId || !createdAttribute) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_INPUT',
+        message: 'customerId and createdAttribute are required.',
+      });
+    }
+    // Call the service to create the prediction attribute
+    const newPredictionAttribute = await customerService.createPredictionAttribute(
+      customerId,
+      createdAttribute
+    );
+    return res.status(201).json({
+      success: true,
+      data: newPredictionAttribute,
+    });
+  }  catch (err) {
+    next(err)
+  }
+}
+
 exports.getProfile = async (req, res, next) => {
   try {
     const profile = await customerService.getCustomerByUserId(req.user.userId)

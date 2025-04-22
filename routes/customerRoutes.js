@@ -3,10 +3,12 @@ const router = express.Router();
 const customerController = require('../controllers/customerController.js');
 
 router.post('/', customerController.createCustomer);
-router.get('/customer/:id', customerController.getCustomerById);
+router.get('/:id', customerController.getCustomerById);
 // router.patch('/:id', customerController.patchCustomerById);
 router.get('/profile', customerController.getProfile)
 router.patch('/profile',  customerController.patchProfile)
+
+router.post('/:cusId/attribute', customerController.createPredictionAttribute);
 
 router.post('/book-session', customerController.bookSession);
 
