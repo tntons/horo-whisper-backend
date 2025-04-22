@@ -8,6 +8,7 @@ exports.getAllTellers = async () => {
   try {
     const tellers = await prisma.Teller.findMany({
       select:{
+        id: true,
         profilePic: true,
         user: {
           select: {
