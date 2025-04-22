@@ -34,6 +34,8 @@ exports.createCustomer = async (req, res, next) => {
 exports.getCustomerById = async (req, res, next) => {
   try {
     const customerId = parseInt(req.params.id, 10);
+    console.log(customerId)
+    console.log("printing")
     const customer = await customerService.getCustomerById(customerId);
     if (!customer) {
       return res.status(404).json({ message: 'Customer not found' });
@@ -238,6 +240,7 @@ exports.verifyPayment = async (req, res, next) => {
 
 exports.getSessionsByCustomerId = async (req, res, next) => {
   try {
+    console.log('imhere');
     const sessions = await customerService.getSessionsByCustomerId(
       req.user.userId
     );

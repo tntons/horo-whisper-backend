@@ -126,6 +126,7 @@ model Chat {
   senderId   Int
   content    String
   createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
 
   session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)

@@ -147,7 +147,7 @@ exports.getCustomerById = async (id) => {
     return customer;
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError(500, 'FETCH_CUSTOMER_ERROR', 'Error fetching customer details');
+    throw new AppError(500, 'FETCH_CUSTOMER_ERROR', error.message);
   }
 };
 
@@ -342,33 +342,68 @@ exports.getSessionsByCustomerId = async (customerId) => {
 
 exports.getSessionsByCustomerId = async (userId) => {
   try {
-
     const customer = await prisma.customer.findUnique({
       where: { userId }
     })
     if (!customer) {
       throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer profile not found')
     }
+
     const sessions = await prisma.session.findMany({
       where: { customerId: customer.id },
       include: {
         teller: {
           select: {
-            user: {
-              select: { username: true }
-            }
+            user: { select: { username: true } }
           }
         },
         reviews: true,
-        chats: true,
-        payment: true
+        payment: true,
+        chats: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            id:        true,
+            content:   true,
+            createdAt: true,
+            senderId:  true
+          }
+        }
       }
     })
 
-    return sessions
+    // compute unread counts in one go
+    const sessionIds = sessions.map(s => s.id)
+    const unreadGroups = await prisma.chat.groupBy({
+      by: ['sessionId'],
+      where: {
+        sessionId: { in: sessionIds },
+        isRead:    false,
+        senderId:  { not: userId }
+      },
+      _count: { _all: true }
+    })
+    const unreadMap = unreadGroups.reduce((m, g) => {
+      m[g.sessionId] = g._count._all
+      return m
+    }, {})
+
+    return sessions.map(session => {
+      const lastChat = session.chats[0] && {
+        id:        session.chats[0].id,
+        content:   session.chats[0].content,
+        timestamp: session.chats[0].createdAt.toISOString(),
+        senderId:  session.chats[0].senderId
+      }
+      return {
+        ...session,
+        lastChat,
+        unreadCount: unreadMap[session.id] || 0,
+        chats:       undefined
+      }
+    })
   } catch (error) {
     console.error('FETCH_SESSIONS_ERROR:', error)
-    if (error instanceof AppError) throw error
     throw new AppError(
       500,
       'FETCH_SESSIONS_ERROR',

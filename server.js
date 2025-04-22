@@ -170,24 +170,54 @@ io.use((socket, next) => {
 io.on('connection', socket => {
   const userId = socket.user.userId
 
-  socket.on('join', (sessionId) => {
+  socket.on('join', async (sessionId) => {
     socket.join(`session:${sessionId}`)
+
+    await prisma.chat.updateMany({
+      where: {
+        sessionId,
+        isRead: false,
+        senderId: { not: userId }
+      },
+      data: { isRead: true }
+    })
+  })
+
+  socket.on('subscribeSession', sessionId => {
+    // console.log(`User ${userId} subscribed to session ${sessionId}`)
+    socket.join(`sessionUpdates:${sessionId}`)
   })
 
   socket.on('sendMessage', async ({ sessionId, content }) => {
     try {
+      const room = `session:${sessionId}`
+      const clients = io.sockets.adapter.rooms.get(room) || new Set()
+      const isRead = clients.size > 1
 
       const chat = await chatService.createChat({
         sessionId,
         senderId: userId,
-        content
+        content,
+        isRead
+      })
+
+      const unreadCount = await prisma.chat.count({
+        where: { sessionId, isRead: false }
+      })
+
+      io.to(`sessionUpdates:${sessionId}`).emit('sessionUpdate', {
+        sessionId,
+        lastMessage: chat.content,
+        lastMessageTime: chat.createdAt.toISOString(),
+        unreadCount
       })
 
       io.to(`session:${sessionId}`).emit('newMessage', {
         id: chat.id,
         content:   chat.content,
         createdAt: chat.createdAt.toISOString(),
-        senderId:  chat.senderId
+        senderId:  chat.senderId,
+        isRead:    chat.isRead
       })
     } catch (err) {
       socket.emit('error', { message: err.message })
@@ -201,6 +231,9 @@ io.on('connection', socket => {
   })
 })
 
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
 
 const port = process.env.PORT || 8000
 server.listen(port, () => {
