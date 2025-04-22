@@ -402,130 +402,92 @@ exports.markTellerPackageDeleted = async (tellerId, packageId) => {
 
 
 exports.getSessionByTellerId = async (type, tellerId) => {
-
-  if (type != "upcoming" && type != "past" && type != "current") {
-    throw new AppError(400, 'INVALID_SESSION_TYPE', 'Invalid session type');
+  if (!['upcoming','past','current'].includes(type)) {
+    throw new AppError(400, 'INVALID_SESSION_TYPE', 'Invalid session type')
   }
-
   const sessionStatus = {
-    upcoming: ["Pending"],
-    past: ["Ended", "Declined"],
-    current: ["Active"]
-  };
-
-
+    upcoming: ['Pending'],
+    past:     ['Ended','Declined'],
+    current:  ['Active']
+  }
+  // load teller + filtered sessions
   const teller = await prisma.Teller.findUnique({
-    where: {
-      id: tellerId
-    },
+    where: { id: tellerId },
     select: {
       id: true,
       sessions: {
-        where: {
-          sessionStatus: {
-            in: sessionStatus[type]  // Use 'in' operator to match any of the statuses
-          }
-        },
+        where: { sessionStatus: { in: sessionStatus[type] } },
         select: {
           id: true,
           customerId: true,
-          tellerId: true,
           sessionStatus: true,
           createdAt: true,
           endedAt: true,
           customer: {
             select: {
-              user: {
-                select: {
-                  id: true,
-                  username: true
-                }
-              },
-              payments: {
-                select: {
-                  id: true,
-                  packageId: true,
-                  package: true,
-                  sessionId: true,
-                  status: true
-                }
-              }
+              user:     { select: { id:true, username:true }},
+              payments: { select: { id:true, packageId:true, package:true, sessionId:true, status:true }}
             }
-          },
+          }
         }
       }
     }
-  });
+  })
+  console.log('teller:', teller)
+  if (!teller) throw new AppError(404,'TELLER_NOT_FOUND','Teller not found')
+  if (!teller.sessions.length) throw new AppError(404,'NO_SESSIONS','No sessions found')
 
-  console.log("printing")
-  console.log(teller);
-
-  if (!teller) {
-    throw new AppError(404, 'TELLER_NOT_FOUND', 'Teller not found');
+  // helper for Thai date/time
+  const fmt = ts => {
+    const s = new Date(ts).toLocaleString('en-US',{ timeZone:'Asia/Bangkok',
+      year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',hour12:false })
+    const [date,time] = s.split(', ')
+    return { date, time }
   }
 
-  if (!teller.sessions || teller.sessions.length === 0) {
-    throw new AppError(404, 'NO_SESSIONS', 'No Session found for this teller');
-  }
-
-  const filteredSessions = teller?.sessions.map(session => {
-    return {
-      ...session,
-      customer: {
-        ...session.customer,
-        payments: session.customer.payments.filter(payment => payment.sessionId === session.id)
-      }
-    };
-  });
-
-
-  // Format result information
-  const formattedSession = {
-    tellerId: teller.id,  // Use teller.id instead of filteredSession.id
-    sessions: filteredSessions.map(session => {
-
-      // Format date and time in Thai timezone
-      const convertToThaiDateTime = (date) => {
-        return new Date(date).toLocaleString('en-US', {
-          timeZone: 'Asia/Bangkok',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-      };
-
-      const formatDateTime = (timestamp) => {
-        const thaiDateTime = convertToThaiDateTime(timestamp);
-        const [date, time] = thaiDateTime.split(', ');
-        return { date, time };
-      };
-
-      // Make sure there's at least one payment before accessing its properties
-      const payment = session.customer.payments && session.customer.payments.length > 0
-        ? session.customer.payments[0]
-        : null;
+  // enrich each session with lastMessage + unreadCount
+  const sessions = await Promise.all(
+    teller.sessions.map(async sess => {
+      // last chat
+      const lastChat = await prisma.chat.findFirst({
+        where: { sessionId: sess.id },
+        orderBy:{ createdAt:'desc' }
+      })
+      // unread count (messages from customer not yet read)
+      const unreadCount = await prisma.chat.count({
+        where: {
+          sessionId: sess.id,
+          isRead:    false,
+          senderId:  { not: tellerId }
+        }
+      })
+      // pick payment
+      const payment = sess.customer.payments.find(p=>p.sessionId===sess.id)
 
       return {
-        sessionId: session.id,
-        customerId: session.customerId,
-        username: session.customer.user.username,
-        sessionStatus: session.sessionStatus,
-        packageId: payment?.package?.id || null,
-        questionNumber: payment?.package?.questionNumber || null,
-        price: payment?.package?.price || null,
-        paymentId: payment?.id || null,
-        createdDate: formatDateTime(session.createdAt).date,
-        createdTime: formatDateTime(session.createdAt).time,
-        endedDate: session.endedAt ? formatDateTime(session.endedAt).date : null,
-        endedTime: session.endedAt ? formatDateTime(session.endedAt).time : null,
-      };
+        sessionId:       sess.id,
+        customerId:      sess.customerId,
+        username:        sess.customer.user.username,
+        sessionStatus:   sess.sessionStatus,
+        packageId:       payment?.package?.id      || null,
+        questionNumber:  payment?.package?.questionNumber || null,
+        price:           payment?.package?.price   || null,
+        paymentId:       payment?.id               || null,
+        createdDate:     fmt(sess.createdAt).date,
+        createdTime:     fmt(sess.createdAt).time,
+        endedDate:       sess.endedAt ? fmt(sess.endedAt).date : null,
+        endedTime:       sess.endedAt ? fmt(sess.endedAt).time : null,
+        lastChat: {
+          content:   lastChat?.content   || null,
+          timestamp: lastChat?.createdAt?.toISOString() || null
+        },
+        unreadCount
+      }
     })
-  };
+  )
 
-  return formattedSession;
+  return { tellerId: teller.id, sessions }
 }
 
 

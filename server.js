@@ -231,6 +231,9 @@ io.on('connection', socket => {
   })
 })
 
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
 
 const port = process.env.PORT || 8000
 server.listen(port, () => {
