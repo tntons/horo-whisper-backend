@@ -48,6 +48,34 @@ exports.createPredictionAttribute = async (customerId, predictionAttribute) => {
   }
 };
 
+exports.getPredictionAttributeByCustomerId = async (customerId) => {
+  try {
+    // Validate that the customer exists
+    const customer = await prisma.Customer.findUnique({ where: { id: customerId } });
+    if (!customer) {
+      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    }
+    // Fetch the prediction attribute
+    const predictionAttribute = await prisma.PredictionAttribute.findUnique({
+      where: { customerId },
+      include: {
+        customer: {
+          include: {
+            user: true,
+          }
+        }
+      }
+    });
+    if (!predictionAttribute) {
+      throw new AppError(404, 'PREDICTION_ATTRIBUTE_NOT_FOUND', 'Prediction attribute not found');
+    }
+    return predictionAttribute;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'FETCH_PREDICTION_ATTRIBUTE_ERROR', 'Error fetching prediction attribute');
+  }
+};
+
 exports.getCustomerById = async (id) => {
   try {
     const customer = await prisma.Customer.findUnique({

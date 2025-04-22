@@ -48,12 +48,12 @@ exports.createPredictionAttribute = async (req, res, next) => {
   try {
     const customerId = parseInt(req.params.cusId, 10);
     const createdAttribute = req.body;
-    
-    if (!customerId || !createdAttribute) {
+
+    if (isNaN(customerId)) {
       return res.status(400).json({
         status: 'error',
-        code: 'INVALID_INPUT',
-        message: 'customerId and createdAttribute are required.',
+        code: 'INVALID_ID',
+        message: 'Invalid Input Type',
       });
     }
     // Call the service to create the prediction attribute
@@ -66,6 +66,28 @@ exports.createPredictionAttribute = async (req, res, next) => {
       data: newPredictionAttribute,
     });
   }  catch (err) {
+    next(err)
+  }
+}
+
+exports.getPredictionAttributeByCustomerId = async (req, res, next) => {
+  try {
+    const customerId = parseInt(req.params.cusId, 10);
+    if (isNaN(customerId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid Input Type',
+      });
+    }
+    const predictionAttribute = await customerService.getPredictionAttributeByCustomerId(
+      customerId
+    );
+    if (!predictionAttribute) {
+      return res.status(404).json({ message: 'Prediction attribute not found' });
+    }
+    res.json({ success: true, data: predictionAttribute });
+  } catch (err) {
     next(err)
   }
 }

@@ -9,6 +9,7 @@ router.get('/profile', customerController.getProfile)
 router.patch('/profile',  customerController.patchProfile)
 
 router.post('/:cusId/attribute', customerController.createPredictionAttribute);
+router.get('/:cusId/attribute', customerController.getPredictionAttributeByCustomerId);
 
 router.post('/book-session', customerController.bookSession);
 
