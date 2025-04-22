@@ -257,6 +257,22 @@ exports.getTellerByUserId = async (userId) => {
   }
 };
 
+exports.updateTellerById = async (tellerId, updateData) => {
+  try {
+    const updatedTeller = await prisma.Teller.update({
+      where: { 
+        id: tellerId 
+      },
+      data: updateData
+    })
+
+    return updatedTeller
+  } catch (error) {
+    if (error instanceof AppError) throw error
+    throw new AppError(500, 'UPDATE_TELLER_ERROR', error.message || 'Error updating teller')
+  }
+}
+
 exports.updateTellerByUserId = async (userId, updateData) => {
   try {
     const updatedTeller = await prisma.teller.update({

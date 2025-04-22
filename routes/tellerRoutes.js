@@ -5,7 +5,8 @@ const tellerController = require('../controllers/tellerController.js');
 router.get('/', tellerController.getAllTellers);
 router.get('/browse', tellerController.getAllBrowseTellers);
 router.get('/:id', tellerController.getTellerById);
-router.patch('/patch/:id', tellerController.patchTellerById);
+router.patch('/:id', tellerController.patchTellerById);
+router.patch('/patch/:id', tellerController.patchTellerByUserId);
 router.post('/', tellerController.createTeller);
 
 router.patch('/accept-session/:sessionId', tellerController.patchAcceptSession);
