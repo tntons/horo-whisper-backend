@@ -183,8 +183,9 @@ io.on('connection', socket => {
     })
   })
 
-  socket.on('joinUpdates', () => {
-    socket.join('sessionUpdates')
+  socket.on('subscribeSession', sessionId => {
+    // console.log(`User ${userId} subscribed to session ${sessionId}`)
+    socket.join(`sessionUpdates:${sessionId}`)
   })
 
   socket.on('sendMessage', async ({ sessionId, content }) => {
@@ -198,6 +199,17 @@ io.on('connection', socket => {
         senderId: userId,
         content,
         isRead
+      })
+
+      const unreadCount = await prisma.chat.count({
+        where: { sessionId, isRead: false }
+      })
+
+      io.to(`sessionUpdates:${sessionId}`).emit('sessionUpdate', {
+        sessionId,
+        lastMessage: chat.content,
+        lastMessageTime: chat.createdAt.toISOString(),
+        unreadCount
       })
 
       io.to(`session:${sessionId}`).emit('newMessage', {

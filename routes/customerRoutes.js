@@ -3,7 +3,7 @@ const router = express.Router();
 const customerController = require('../controllers/customerController.js');
 
 router.post('/', customerController.createCustomer);
-router.get('/:id', customerController.getCustomerById);
+router.get('/id/:id', customerController.getCustomerById);
 // router.patch('/:id', customerController.patchCustomerById);
 router.get('/profile', customerController.getProfile)
 router.patch('/profile',  customerController.patchProfile)
