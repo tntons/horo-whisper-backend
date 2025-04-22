@@ -125,7 +125,7 @@ app.post('/auth/select-role', requireAuth, async (req, res, next) => {
     else if (role === 'teller') {
       profile = await prisma.teller.findUnique({ where: { userId } })
       if (!profile) {
-        profile = await prisma.teller.create({ data: { userId } })
+        profile = await prisma.teller.create({ data: { userId, specialty: [''], bio: '' } })
       }
     }
     else {
