@@ -7,7 +7,8 @@ const prisma = new PrismaClient();
 exports.getAllTellers = async () => {
   try {
     const tellers = await prisma.Teller.findMany({
-      include: {
+      select:{
+        profilePic: true,
         user: {
           select: {
             username: true, // Fetch the teller's name from the User table
@@ -56,6 +57,7 @@ exports.getAllTellers = async () => {
 
       return {
         tellerId: teller.id,
+        profilePic: teller.profilePic,
         tellerName: teller.user.username,
         totalReviews,
         averageRating,

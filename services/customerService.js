@@ -93,7 +93,7 @@ exports.getCustomerById = async (id) => {
     return customer;
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError(500, 'FETCH_CUSTOMER_ERROR', 'Error fetching customer details');
+    throw new AppError(500, 'FETCH_CUSTOMER_ERROR', error.message);
   }
 };
 
