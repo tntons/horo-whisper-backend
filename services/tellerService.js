@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const { AppError } = require('../middleware/errorHandler');
+const { format } = require('morgan');
 const prisma = new PrismaClient();
 
 // Get all tellers
@@ -174,7 +175,7 @@ exports.getTellerById = async (id) => {
       averageRating,
       packages: teller.packages, // All teller packages
       reviews: allReviews, // All reviews with customerName
-      traffic: totalActiveSessions*5,
+      traffic: totalActiveSessions * 5,
       numberOfEndedSessions: EndedSessions.length,
       totalAmountFromEndedSessions,
     };
@@ -458,12 +459,12 @@ exports.getSessionByTellerId = async (type, tellerId) => {
     };
   });
 
-  
+
   // Format result information
   const formattedSession = {
     tellerId: teller.id,  // Use teller.id instead of filteredSession.id
-    sessions: filteredSessions.map(session => { 
-      
+    sessions: filteredSessions.map(session => {
+
       // Format date and time in Thai timezone
       const convertToThaiDateTime = (date) => {
         return new Date(date).toLocaleString('en-US', {
@@ -476,18 +477,18 @@ exports.getSessionByTellerId = async (type, tellerId) => {
           hour12: false
         });
       };
-  
+
       const formatDateTime = (timestamp) => {
         const thaiDateTime = convertToThaiDateTime(timestamp);
         const [date, time] = thaiDateTime.split(', ');
         return { date, time };
       };
-  
+
       // Make sure there's at least one payment before accessing its properties
-      const payment = session.customer.payments && session.customer.payments.length > 0 
-        ? session.customer.payments[0] 
+      const payment = session.customer.payments && session.customer.payments.length > 0
+        ? session.customer.payments[0]
         : null;
-  
+
       return {
         sessionId: session.id,
         customerId: session.customerId,
@@ -504,7 +505,7 @@ exports.getSessionByTellerId = async (type, tellerId) => {
       };
     })
   };
-  
+
   return formattedSession;
 }
 
@@ -560,13 +561,14 @@ exports.patchSessionStatus = async (sessionId, status) => {
 
       const updatedSession = await tx.Session.update({
         where: { id: sessionId },
-        data: { sessionStatus: status,
+        data: {
+          sessionStatus: status,
           endedAt: status === "Ended" ? new Date() : null
         }
       });
 
       // Update the related payment
-      if(status === "Processing"){
+      if (status === "Processing") {
         await exports.patchPaymentStatus(paymentId, status);
       }
 
@@ -613,3 +615,104 @@ exports.createReview = async ({ sessionId, rating, comment }) => {
     throw new AppError(500, 'CREATE_REVIEW_ERROR', 'Error creating review');
   }
 };
+
+exports.getReviewByTellerId = async (tellerId) => {
+  try {
+    const reviews = await prisma.review.findMany({
+      where: {
+        session: {
+          tellerId: tellerId, // Replace with the actual tellerId
+        },
+      },
+      orderBy: {
+        reviewAt: 'desc'  // Add this to sort by date descending
+      },
+      include: {
+        session: {
+          select: {
+            customer: {
+              select: {
+                profilePic: true,
+                user: {
+                  select: {
+                    username: true,
+
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const filteredReviews = reviews.map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      comment: review.comment,
+      reviewAt: review.reviewAt,
+      username: review.session.customer.user.username,
+      profilePic: review.session.customer.user.profilePic ?? 'default profile pic url',
+    }));
+
+    return filteredReviews;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'FETCH_REVIEWS_ERROR', error.message);
+  }
+}
+
+exports.getSessionDataBySessionId = async (sessionId) => {
+  try {
+    const session = await prisma.Session.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
+    }
+
+    return session;
+  } catch (error) {
+    throw new AppError(500, 'FETCH_SESSION_ERROR', 'Error fetching session');
+  }
+}
+
+exports.getTellerInfoBySessionId = async (sessionId) => {
+  try {
+    const tellerInfo = await prisma.Session.findUnique({
+      where: { id: sessionId },
+      select: {
+        teller: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                username: true,
+                firstName: true,
+                lastName: true
+                // Add other user fields you need
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!tellerInfo) {
+      throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
+    }
+
+    const formattedTellerInfo = {
+      id: tellerInfo.teller.id,
+      username: tellerInfo.teller.user.username,
+      firstName: tellerInfo.teller.user.firstName,
+      lastName: tellerInfo.teller.user.lastName,
+    };
+
+    return formattedTellerInfo;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'FETCH_REVIEWS_ERROR', error.message);
+  }
+}

@@ -30,7 +30,7 @@ app.post('/auth/google', async (req, res) => {
     // upsert user
     const user = await prisma.user.upsert({
       where: { email },
-      create: { email, firstName: given_name, lastName: family_name, username: given_name+family_name.slice(0,2) },
+      create: { email, firstName: given_name, lastName: family_name, username: given_name + (family_name ? family_name.slice(0,2) : '') },
       update: {},
     })
 
@@ -49,7 +49,7 @@ app.post('/auth/google', async (req, res) => {
 app.get('/mock/user', async (req, res) => {
   try {
 
-    const user_id =  1;
+    const user_id =  15;
 
     const token = jwt.sign(
       { userId: user_id },
@@ -192,6 +192,12 @@ io.on('connection', socket => {
     } catch (err) {
       socket.emit('error', { message: err.message })
     }
+  })
+
+  socket.on('endSession', ({ sessionId }) => {
+
+    console.log(`Ending session:${sessionId}`); // Add this log
+    io.to(`session:${sessionId}`).emit('sessionEnded')
   })
 })
 
