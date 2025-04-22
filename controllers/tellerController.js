@@ -483,3 +483,24 @@ exports.getSessionDataBySessionId = async (req, res, next) => {
     next(err);
   }
 }
+
+exports.getTellerInfoBySessionId = async (req, res, next) => {
+  try {
+    const sessionId = parseInt(req.params.sessionId, 10);
+
+    // check if sessionId is a number
+    if (isNaN(sessionId)) {
+      return res.status(400).json(invalidInputTypeMsg);
+    }
+
+    const result = await tellerService.getTellerInfoBySessionId(sessionId);
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+
+  } catch (err) {
+    next(err);
+  }
+}

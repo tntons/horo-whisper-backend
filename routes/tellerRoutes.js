@@ -12,6 +12,7 @@ router.patch('/accept-session/:sessionId', tellerController.patchAcceptSession);
 router.patch('/decline-session/:sessionId', tellerController.patchDeclineSession);
 router.patch('/end-session/:sessionId', tellerController.patchEndSession);
 router.get('/sessionData/:sessionId', tellerController.getSessionDataBySessionId);
+router.get('/get-teller-info/:sessionId', tellerController.getTellerInfoBySessionId);
 
 router.post('/:tellerId/teller-package', tellerController.postTellerPackageByTellerId);
 router.delete('/:tellerId/teller-package', tellerController.deleteTellerPackageByTellerId);

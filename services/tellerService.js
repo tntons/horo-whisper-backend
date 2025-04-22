@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const { AppError } = require('../middleware/errorHandler');
+const { format } = require('morgan');
 const prisma = new PrismaClient();
 
 // Get all tellers
@@ -674,5 +675,44 @@ exports.getSessionDataBySessionId = async (sessionId) => {
     return session;
   } catch (error) {
     throw new AppError(500, 'FETCH_SESSION_ERROR', 'Error fetching session');
+  }
+}
+
+exports.getTellerInfoBySessionId = async (sessionId) => {
+  try {
+    const tellerInfo = await prisma.Session.findUnique({
+      where: { id: sessionId },
+      select: {
+        teller: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                username: true,
+                firstName: true,
+                lastName: true
+                // Add other user fields you need
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!tellerInfo) {
+      throw new AppError(404, 'SESSION_NOT_FOUND', 'Session not found');
+    }
+
+    const formattedTellerInfo = {
+      id: tellerInfo.teller.id,
+      username: tellerInfo.teller.user.username,
+      firstName: tellerInfo.teller.user.firstName,
+      lastName: tellerInfo.teller.user.lastName,
+    };
+
+    return formattedTellerInfo;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'FETCH_REVIEWS_ERROR', error.message);
   }
 }
