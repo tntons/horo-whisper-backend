@@ -83,7 +83,6 @@ exports.getCustomerById = async (id) => {
       include: {
         user: true,
         prediction: true,
-        predictionAttribute: true,
       },
     });
 
