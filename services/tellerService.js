@@ -252,7 +252,7 @@ exports.getTellerByUserId = async (userId) => {
     };
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError(500, 'FETCH_TELLER_ERROR', 'Error fetching teller details');
+    throw new AppError(500, 'FETCH_TELLER_ERROR', 'Error fetching teller details1');
   }
 };
 
