@@ -44,3 +44,24 @@ exports.getChatsBySessionId = async (req, res, next) => {
     next(err)
   }
 }
+
+exports.getChatsParticipantInfoBySessionId = async (req, res, next) => {
+    try {
+        const sessionId = parseInt(req.params.sessionId, 10)
+        const currentUserId  = req.user.userId
+    
+        if (isNaN(sessionId)) {
+        return res.status(400).json({
+            status: 'error', code: 'INVALID_ID', message: 'Invalid sessionId'
+        })
+        }
+    
+        const participants = await chatService.getChatsParticipantInfoBySessionId(
+        sessionId,
+        currentUserId
+        )
+        res.json({ success: true, data: participants })
+    } catch (err) {
+        next(err)
+    }
+}
