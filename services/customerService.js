@@ -27,6 +27,60 @@ exports.createCustomer = async ({ userId, profilePic }) => {
   }
 };
 
+exports.updateUserByCusId = async (customerId, updateData) => {
+  try {
+    // Validate that the customer exists
+    const customer = await prisma.Customer.findUnique({ where: { id: customerId } });
+    if (!customer) {
+      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    }
+
+    if (updateData.birthDate === "") {
+      updateData.birthDate = null;
+    } else {
+      updateData.birthDate = new Date(updateData.birthDate);
+    }
+
+    // Update the user data
+    const updatedUser = await prisma.User.update({
+      where: { id: customer.userId },
+      data: updateData,
+    });
+
+    return updatedUser;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'UPDATE_USER_ERROR', 'Error updating user');
+  }
+}
+
+exports.updatePredictionByCusId = async (customerId, updateData) => {
+  try {
+    // Validate that the customer exists
+    const customer = await prisma.Customer.findUnique({ where: { id: customerId } });
+    if (!customer) {
+      throw new AppError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    }
+
+    // Validate that the prediction attribute exists
+    const predictionAttribute = await prisma.PredictionAttribute.findUnique({ where: { customerId } });
+    if (!predictionAttribute) {
+      updatedPredictionAttribute = this.createPredictionAttribute(customerId, updateData);
+    } else {
+      // Update the prediction attribute
+      updatedPredictionAttribute = await prisma.PredictionAttribute.update({
+        where: { customerId },
+        data: updateData,
+      });
+    }
+
+    return updatedPredictionAttribute;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(500, 'UPDATE_USER_ERROR', 'Error updating user');
+  }
+}
+
 exports.createPredictionAttribute = async (customerId, predictionAttribute) => {
   try {
     // Validate that the customer exists
@@ -99,7 +153,7 @@ exports.getCustomerById = async (id) => {
 
 exports.getCustomerByUserId = async (userId) => {
   try {
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma.Customer.findUnique({
       where: { userId },
       include: {
         user: true,

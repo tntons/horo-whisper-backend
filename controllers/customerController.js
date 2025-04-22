@@ -117,6 +117,8 @@ exports.patchCustomerById = async (req, res, next) => {
   try {
     const customerId = parseInt(req.params.id, 10);
 
+    console.log('customerId:', customerId);
+
     // Validate tellerId
     if (isNaN(customerId)) {
       return res.status(400).json({
@@ -127,11 +129,22 @@ exports.patchCustomerById = async (req, res, next) => {
     }
 
     const updateData = req.body;
-    const updatedCustomerId = await customerService.updateCustomerById(customerId, updateData);
+    const updateUser = updateData.user;
+    const updatePrediction = updateData.prediction;
+
+    console.log('updateUser:', updateUser);
+    console.log('updatePrediction:', updatePrediction);
+
+    if (updateUser) {
+      const updatedUser = await customerService.updateUserByCusId(customerId, updateUser);
+    }
+    if (updatePrediction) {
+      const updatedPrediction = await customerService.updatePredictionByCusId(customerId, updatePrediction);
+    }
 
     return res.status(200).json({
       success: true,
-      data: updatedCustomer,
+      data: updateData,
     });
   } catch (err) {
     next(err);
